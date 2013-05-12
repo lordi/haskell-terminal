@@ -1,0 +1,17 @@
+Name: Terminal
+Version: 0.0.1
+Description: Haskell terminal emulator
+License: GPL
+License-file: LICENSE
+Author: Hannes Gräuler
+Maintainer: hgraeule@uos.de
+Build-Type: Simple
+Cabal-Version: >=1.2
+
+Executable hsterm
+  Main-is: Main.hs
+  Hs-Source-Dirs: src
+  Extensions: CPP
+  Build-Depends: base >= 3 && < 5, containers, mtl, stm, random, array
+  Build-Depends: time, GLUT, OpenGLRaw, GLURaw, OpenGL, parsec, unix, process
+
