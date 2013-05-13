@@ -27,10 +27,17 @@ import Terminal.Parser
 import Terminal.Terminal
 import Terminal.Types
 
+-- Constants (for now)
+font = Fixed9By15
+numColumns = 80
+numRows = 24
+screenWidth = 9 * numColumns
+screenHeight = 16 * numRows
+
 initDisplay = do
   _ <- getArgsAndInitialize
   initialDisplayMode $= [DoubleBuffered, RGBAMode, WithDepthBuffer]
-  createWindow "Termskell"
+  createWindow "Haskell terminal emulator"
 
   materialShininess Front $= 0.0
   shadeModel $= Smooth
@@ -39,44 +46,80 @@ initDisplay = do
   normalize $= Enabled
   depthFunc $= Just Less
   -- cullFace $= Just Back
-
-  blend $= Enabled
-  blendFunc $= (SrcAlpha, OneMinusSrcAlpha)
+  -- blend $= Enabled
+  -- blendFunc $= (SrcAlpha, OneMinusSrcAlpha)
 
   clearColor $= Color4 0 0 0 1
 
-font = Fixed9By15
+unitFrame = do
+  let texCoord2f = texCoord :: TexCoord2 GLfloat -> IO ()
+      vertex3f = vertex :: Vertex3 GLfloat -> IO ()
+  renderPrimitive LineStrip $ do
+    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3 (-1.0)    (-1.0)   0  )
+    texCoord2f (TexCoord2 0 1); vertex3f (Vertex3 (-1.0)      1.0    0  )
+    texCoord2f (TexCoord2 1 1); vertex3f (Vertex3   1.0       1.0    0  )
+    texCoord2f (TexCoord2 1 0); vertex3f (Vertex3   1.0     (-1.0)   0  )
+    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3 (-1.0)    (-1.0)   0  )
+
+unitQuad = do
+  let texCoord2f = texCoord :: TexCoord2 GLfloat -> IO ()
+      vertex3f = vertex :: Vertex3 GLfloat -> IO ()
+  renderPrimitive Quads $ do
+    texCoord2f (TexCoord2 1 1); vertex3f (Vertex3 (-0) (-0)   0 )
+    texCoord2f (TexCoord2 1 0); vertex3f (Vertex3 (-0)   1    0 )
+    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3   1    1    0 )
+    texCoord2f (TexCoord2 0 1); vertex3f (Vertex3   1  (-0)   0 )
+
+reshapeHandler size = do
+  viewport $= (Position 0 0, Size screenWidth screenHeight)
+  matrixMode $= Projection
+  loadIdentity
+  ortho (0::GLdouble) 1 1 0 0 1
+  scale (1.0 / (fromIntegral numColumns)) ((1.0 / (fromIntegral numRows)) ::GLfloat) 1
 
 displayHandler a = do
-  clear [ColorBuffer, DepthBuffer]
   term <- readIORef a
 
+  clear [ColorBuffer, DepthBuffer]
+  depthFunc $= Just Always
+
+  matrixMode $= Modelview 0
+  loadIdentity
+  -- Background
+  preservingMatrix $ do
+    color (Color3 0.04 0.04 0.10 :: Color3 GLfloat)
+    scale (fromIntegral numColumns) (fromIntegral numRows) (1 ::GLfloat)
+    unitQuad
+
+  -- Cursor
+  preservingMatrix $ do
+    let (y, x) = cursorPos term
+    color (Color3 0.52 0.12 0.0 :: Color3 GLfloat)
+    translate $ Vector3 (fromIntegral x - 1) (fromIntegral y - 1) (0::GLfloat)
+    unitQuad
+
   let withTextMode sth = do
-      textureBinding Texture2D $= Nothing
-      matrixMode $= Modelview 0
+      matrixMode $= Projection
       preservingMatrix $ do
+        loadIdentity
+        textureBinding Texture2D $= Nothing
+        matrixMode $= Modelview 0
+        preservingMatrix $ do
           loadIdentity
           sth
 
-  -- TODO prettify code
-  (Size screenWidth screenHeight) <- get windowSize
+  -- Show the terminal buffer, this will be replaced by a more sophisticated
+  -- text output that allows for zooming etc.
   chrWidth <- stringWidth font " "
   chrHeight <- fontHeight font
-  let (chrWidth', chrHeight') = ((fromIntegral chrWidth) * 2.0 / (fromIntegral screenWidth), chrHeight * 2.0 / (fromIntegral screenHeight))
-  let rasterPosition (x, y) = Vertex4 (-1 + ((fromIntegral x - 1) * chrWidth')) (1 - (fromIntegral y) * chrHeight') 0 (1::GLfloat)
-
+  color (Color3 0.8 0.8 0.8 :: Color3 GLfloat)
   withTextMode $ do
-    currentRasterPosition $= Vertex4 (-1) (-0.95) 0 (1::GLfloat)
-    renderString font $ show ((cursorPos term), inBuffer term)
     let lines = chunk (cols term) $ elems (screen term)
-        (y, x) = cursorPos term
+        (relChrWidth, relChrHeight) = ((fromIntegral chrWidth) * 2.0 / (fromIntegral screenWidth), chrHeight * 2.0 / (fromIntegral screenHeight))
+        rasterPosition (x, y) = Vertex4 (-1 + ((fromIntegral x - 1) * relChrWidth)) (1 - (fromIntegral y) * relChrHeight + 0.018) 0 (1::GLfloat)
     forM_ (zip [1..] lines) $ \(i, s) -> do
         currentRasterPosition $= rasterPosition (1, i)
         renderString font s
-
-    -- Show cursor
-    currentRasterPosition $= rasterPosition (x, y)
-    renderString font "|"
 
   swapBuffers
 
@@ -155,6 +198,7 @@ main = do
     displayCallback $= displayHandler a
     idleCallback $= Just (postRedisplay Nothing)
     keyboardMouseCallback $= Just (keyboardMouseHandler hInWrite)
+    reshapeCallback $= Just (reshapeHandler)
 
     let environment = [
             ("TERM", "vt100"),
