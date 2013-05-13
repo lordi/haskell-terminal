@@ -7,6 +7,7 @@ Author: Hannes Gräuler
 Maintainer: hgraeule@uos.de
 Build-Type: Simple
 Cabal-Version: >=1.2
+Extra-source-files: README.md
 
 Executable hsterm
   Main-is: Main.hs
@@ -14,4 +15,15 @@ Executable hsterm
   Extensions: CPP
   Build-Depends: base >= 3 && < 5, containers, mtl, stm, random, array
   Build-Depends: time, GLUT, OpenGLRaw, GLURaw, OpenGL, parsec, unix, process
+
+test-suite Test
+  type:            exitcode-stdio-1.0
+  x-uses-tf:       true
+  build-depends:   
+                   base >= 4 && < 5,
+                   QuickCheck >= 2.4,
+                   test-framework >= 0.4.1,
+                   test-framework-quickcheck2
+  hs-source-dirs:  tests, src
+  main-is:         Main.hs
 
