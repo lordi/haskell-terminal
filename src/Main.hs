@@ -31,6 +31,7 @@ initDisplay = do
   _ <- getArgsAndInitialize
   initialDisplayMode $= [DoubleBuffered, RGBAMode]
   createWindow "Haskell terminal emulator"
+  windowSize $= Size screenWidth screenHeight
   clearColor $= Color4 0 0 0 1
 
 unitQuad = do
