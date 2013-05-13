@@ -3,25 +3,18 @@ import System.Process
 import Data.Array.Unboxed
 import Data.IORef
 import Data.Char
-import Control.Monad
 import Control.Monad.State hiding (state, get)
 import System.IO
 
 import Graphics.UI.GLUT hiding (Bool, Float)
-import Graphics.Rendering.GLU.Raw
 import Graphics.Rendering.OpenGL hiding (Bool, Float, get)
 import Graphics.Rendering.OpenGL.GLU (perspective)
 import Graphics.Rendering.OpenGL.GL.FramebufferObjects
 import Graphics.Rendering.OpenGL.GL.Texturing.Environments
-import Graphics.Rendering.OpenGL.Raw.ARB.Compatibility (glPushMatrix, glPopMatrix) -- TODO check if these are really needed
 import System.Posix.IO
 import System.Posix.Terminal hiding (TerminalState)
-import GHC.IO.Handle
-import Debug.Trace
 import Control.Concurrent
 import Control.Applicative hiding (many)
-import Text.Parsec
-import Text.Parsec.String
 
 import Terminal.Parser
 import Terminal.Terminal
@@ -36,30 +29,9 @@ screenHeight = 16 * numRows
 
 initDisplay = do
   _ <- getArgsAndInitialize
-  initialDisplayMode $= [DoubleBuffered, RGBAMode, WithDepthBuffer]
+  initialDisplayMode $= [DoubleBuffered, RGBAMode]
   createWindow "Haskell terminal emulator"
-
-  materialShininess Front $= 0.0
-  shadeModel $= Smooth
-  frontFace $= CW
-  autoNormal $= Enabled
-  normalize $= Enabled
-  depthFunc $= Just Less
-  -- cullFace $= Just Back
-  -- blend $= Enabled
-  -- blendFunc $= (SrcAlpha, OneMinusSrcAlpha)
-
   clearColor $= Color4 0 0 0 1
-
-unitFrame = do
-  let texCoord2f = texCoord :: TexCoord2 GLfloat -> IO ()
-      vertex3f = vertex :: Vertex3 GLfloat -> IO ()
-  renderPrimitive LineStrip $ do
-    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3 (-1.0)    (-1.0)   0  )
-    texCoord2f (TexCoord2 0 1); vertex3f (Vertex3 (-1.0)      1.0    0  )
-    texCoord2f (TexCoord2 1 1); vertex3f (Vertex3   1.0       1.0    0  )
-    texCoord2f (TexCoord2 1 0); vertex3f (Vertex3   1.0     (-1.0)   0  )
-    texCoord2f (TexCoord2 0 0); vertex3f (Vertex3 (-1.0)    (-1.0)   0  )
 
 unitQuad = do
   let texCoord2f = texCoord :: TexCoord2 GLfloat -> IO ()
@@ -77,11 +49,10 @@ reshapeHandler size = do
   ortho (0::GLdouble) 1 1 0 0 1
   scale (1.0 / (fromIntegral numColumns)) ((1.0 / (fromIntegral numRows)) ::GLfloat) 1
 
-displayHandler a = do
-  term <- readIORef a
+displayHandler termRef = do
+  term <- readIORef termRef
 
-  clear [ColorBuffer, DepthBuffer]
-  depthFunc $= Just Always
+  clear [ColorBuffer]
 
   matrixMode $= Modelview 0
   loadIdentity
@@ -164,11 +135,6 @@ runTerminal a in_ out = do
             liftIO $ hPutStr in_ (inBuffer s)
             modify $ \t -> t { inBuffer = "" } -}
 
-redirect :: Handle -> Handle -> IO ()
-redirect from to =
-    forever $ do
-        hGetChar from >>= hPutChar to
-
 keyboardMouseHandler hInWrite (Char c) Down modifiers position = do
     hPutChar hInWrite c
 keyboardMouseHandler hInWrite chr st modifiers position = do return ()
@@ -193,9 +159,9 @@ main = do
 
     initDisplay
 
-    a <- newIORef defaultTerm
+    termRef <- newIORef defaultTerm
 
-    displayCallback $= displayHandler a
+    displayCallback $= displayHandler termRef
     idleCallback $= Just (postRedisplay Nothing)
     keyboardMouseCallback $= Just (keyboardMouseHandler hInWrite)
     reshapeCallback $= Just (reshapeHandler)
@@ -204,10 +170,9 @@ main = do
             ("TERM", "vt100"),
             ("COLUMS", "79"),
             ("ROWS", "24")]
-    process <- runProcess "script" ["-c", "bash --init-file .bashrc", "-f", "/dev/null"] Nothing (Just environment)
+        cmd = "script"
+        cmdParams = ["-c", "bash --init-file .bashrc", "-f", "/dev/null"]
+    process <- runProcess cmd cmdParams Nothing (Just environment)
             (Just hInRead) (Just hOutWrite) Nothing
-    -- 
-    -- forkIO $ redirect stdin hInWrite
-    forkIO $ runTerminal a hInWrite hOutRead
-    -- forkIO $ runStateT (runTerminal hInWrite hOutRead) (initTerm (24, 80)) >> return ()
+    forkIO $ runTerminal termRef hInWrite hOutRead
     mainLoop
