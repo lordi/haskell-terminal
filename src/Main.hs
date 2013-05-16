@@ -8,6 +8,7 @@ import System.IO
 
 import Graphics.UI.GLUT hiding (Bool, Float)
 import Graphics.Rendering.OpenGL hiding (Bool, Float, get)
+import Graphics.Rendering.OpenGL.GL.Shaders.Uniform
 import Graphics.Rendering.OpenGL.GLU (perspective)
 import Graphics.Rendering.OpenGL.GL.FramebufferObjects
 import Graphics.Rendering.OpenGL.GL.Texturing.Environments
@@ -19,6 +20,9 @@ import Control.Applicative hiding (many)
 import Terminal.Parser
 import Terminal.Terminal
 import Terminal.Types
+import ShaderUtils
+import Data.Time.Clock
+import Data.Time.Calendar
 
 -- Constants (for now)
 font = Fixed9By15
@@ -50,7 +54,7 @@ reshapeHandler size = do
   ortho (0::GLdouble) 1 1 0 0 1
   scale (1.0 / (fromIntegral numColumns)) ((1.0 / (fromIntegral numRows)) ::GLfloat) 1
 
-displayHandler termRef = do
+displayHandler termRef backgroundPrg = do
   term <- readIORef termRef
 
   clear [ColorBuffer]
@@ -63,12 +67,33 @@ displayHandler termRef = do
     scale (fromIntegral numColumns) (fromIntegral numRows) (1 ::GLfloat)
     unitQuad
 
-  -- Cursor
+  currentProgram $= Just backgroundPrg
+  let (cy, cx) = cursorPos term
+  let setUniform var val = do
+      location <- get (uniformLocation backgroundPrg var)
+      reportErrors
+      uniform location $= val
+  setUniform "cursory" (Index1 ((fromIntegral cy) :: GLfloat))
+  setUniform "cursorx" (Index1 ((fromIntegral cx) :: GLfloat))
+
+  let time = getCurrentTime >>= return . realToFrac . utctDayTime
+  timeInSeconds <- time
+  setUniform "time" (Index1 (timeInSeconds :: GLfloat))
+
+  preservingMatrix $ do
+    color (Color3 0.04 0.04 0.10 :: Color3 GLfloat)
+    scale (fromIntegral numColumns) (fromIntegral numRows) (1 ::GLfloat)
+    unitQuad
+
+  currentProgram $= Nothing
+
+  {- Cursor
   preservingMatrix $ do
     let (y, x) = cursorPos term
     color (Color3 0.52 0.12 0.0 :: Color3 GLfloat)
     translate $ Vector3 (fromIntegral x - 1) (fromIntegral y - 1) (0::GLfloat)
     unitQuad
+  -}
 
   let withTextMode sth = do
       matrixMode $= Projection
@@ -160,9 +185,13 @@ main = do
 
     initDisplay
 
+    -- Initialize background shader
+    checkGLSLSupport
+    backgroundPrg <- readCompileAndLink "themes/default/background.vert" "themes/default/background.frag"
+
     termRef <- newIORef defaultTerm
 
-    displayCallback $= displayHandler termRef
+    displayCallback $= displayHandler termRef backgroundPrg
     idleCallback $= Just (postRedisplay Nothing)
     keyboardMouseCallback $= Just (keyboardMouseHandler hInWrite)
     reshapeCallback $= Just (reshapeHandler)
