@@ -1,6 +1,6 @@
 -- Utils for loading, compiling and linking GLSL shaders
 -- Largely taken from GLUT's Brick.hs example
-module ShaderUtils where
+module Hsterm.ShaderUtils where
 
 import Prelude hiding ( sum )
 import Control.Applicative
