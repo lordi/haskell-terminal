@@ -62,9 +62,10 @@ reshapeHandler size = do
 displayHandler :: State -> IO ()
 displayHandler state = do
   term <- get $ terminal state
-  Just backgroundPrg <- get $ backgroundProgram state
 
   clear [ColorBuffer]
+  blend $= Enabled
+  blendFunc $= (SrcAlpha, OneMinusSrcAlpha)
 
   matrixMode $= Modelview 0
   loadIdentity
@@ -74,6 +75,7 @@ displayHandler state = do
     scale (fromIntegral numColumns) (fromIntegral numRows) (1 ::GLfloat)
     unitQuad
 
+  Just backgroundPrg <- get $ backgroundProgram state 
   currentProgram $= Just backgroundPrg
   let (cy, cx) = cursorPos term
   let setUniform var val = do
@@ -92,6 +94,24 @@ displayHandler state = do
     scale (fromIntegral numColumns) (fromIntegral numRows) (1 ::GLfloat)
     unitQuad
 
+  Just cursorPrg <- get $ cursorProgram state 
+  currentProgram $= Just cursorPrg
+  let (cy, cx) = cursorPos term
+  let setUniform var val = do
+      location <- get (uniformLocation cursorPrg var)
+      reportErrors
+      uniform location $= val
+  setUniform "cursory" (Index1 ((fromIntegral cy) :: GLfloat))
+  setUniform "cursorx" (Index1 ((fromIntegral cx) :: GLfloat))
+
+  let time = getCurrentTime >>= return . realToFrac . utctDayTime
+  timeInSeconds <- time
+  setUniform "time" (Index1 (timeInSeconds :: GLfloat))
+
+  preservingMatrix $ do
+    color (Color3 0.04 0.04 0.10 :: Color3 GLfloat)
+    scale (fromIntegral numColumns) (fromIntegral numRows) (1 ::GLfloat)
+    unitQuad
   currentProgram $= Nothing
 
   {- Cursor
@@ -193,12 +213,19 @@ main = do
     initDisplay
     state <- makeState 
 
-    -- Initialize background shader
     checkGLSLSupport
+    
+    -- Initialize background shader
     backgroundPrg <- readCompileAndLink \
         "themes/default/background.vert"
         "themes/default/background.frag"
     backgroundProgram state $= Just backgroundPrg
+
+    -- Initialize cursor shader
+    cursorPrg <- readCompileAndLink \
+        "themes/default/cursor.vert"
+        "themes/default/cursor.frag"
+    cursorProgram state $= Just cursorPrg
 
     displayCallback $= displayHandler state
     idleCallback $= Just (postRedisplay Nothing)
