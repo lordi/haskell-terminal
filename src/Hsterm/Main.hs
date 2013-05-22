@@ -59,46 +59,11 @@ reshapeHandler size = do
   ortho (0::GLdouble) 1 1 0 0 1
   scale (1.0 / (fromIntegral numColumns)) ((1.0 / (fromIntegral numRows)) ::GLfloat) 1
 
-displayHandler :: State -> IO ()
-displayHandler state = do
-  term <- get $ terminal state
-
-  clear [ColorBuffer]
-  blend $= Enabled
-  blendFunc $= (SrcAlpha, OneMinusSrcAlpha)
-
-  matrixMode $= Modelview 0
-  loadIdentity
-  -- Background
-  preservingMatrix $ do
-    color (Color3 0.04 0.04 0.10 :: Color3 GLfloat)
-    scale (fromIntegral numColumns) (fromIntegral numRows) (1 ::GLfloat)
-    unitQuad
-
-  Just backgroundPrg <- get $ backgroundProgram state 
-  currentProgram $= Just backgroundPrg
-  let (cy, cx) = cursorPos term
+-- |Select shader, prepare uniforms, blend full screen quad
+blendQuadWithProgram prg (cy, cx)= do
+  currentProgram $= Just prg
   let setUniform var val = do
-      location <- get (uniformLocation backgroundPrg var)
-      reportErrors
-      uniform location $= val
-  setUniform "cursory" (Index1 ((fromIntegral cy) :: GLfloat))
-  setUniform "cursorx" (Index1 ((fromIntegral cx) :: GLfloat))
-
-  let time = getCurrentTime >>= return . realToFrac . utctDayTime
-  timeInSeconds <- time
-  setUniform "time" (Index1 (timeInSeconds :: GLfloat))
-
-  preservingMatrix $ do
-    color (Color3 0.04 0.04 0.10 :: Color3 GLfloat)
-    scale (fromIntegral numColumns) (fromIntegral numRows) (1 ::GLfloat)
-    unitQuad
-
-  Just cursorPrg <- get $ cursorProgram state 
-  currentProgram $= Just cursorPrg
-  let (cy, cx) = cursorPos term
-  let setUniform var val = do
-      location <- get (uniformLocation cursorPrg var)
+      location <- get (uniformLocation prg var)
       reportErrors
       uniform location $= val
   setUniform "cursory" (Index1 ((fromIntegral cy) :: GLfloat))
@@ -114,13 +79,19 @@ displayHandler state = do
     unitQuad
   currentProgram $= Nothing
 
-  {- Cursor
-  preservingMatrix $ do
-    let (y, x) = cursorPos term
-    color (Color3 0.52 0.12 0.0 :: Color3 GLfloat)
-    translate $ Vector3 (fromIntegral x - 1) (fromIntegral y - 1) (0::GLfloat)
-    unitQuad
-  -}
+displayHandler :: State -> IO ()
+displayHandler state = do
+  term <- get $ terminal state
+
+  clear [ColorBuffer]
+  blend $= Enabled
+  blendFunc $= (SrcAlpha, OneMinusSrcAlpha)
+
+  matrixMode $= Modelview 0
+  loadIdentity
+
+  Just backgroundPrg <- get $ backgroundProgram state 
+  blendQuadWithProgram backgroundPrg (cursorPos term)
 
   let withTextMode sth = do
       matrixMode $= Projection
@@ -144,6 +115,9 @@ displayHandler state = do
     forM_ (zip [1..] lines) $ \(i, s) -> do
         currentRasterPosition $= rasterPosition (1, i)
         renderString font s
+
+  Just cursorPrg <- get $ cursorProgram state 
+  blendQuadWithProgram cursorPrg (cursorPos term)
 
   swapBuffers
 
