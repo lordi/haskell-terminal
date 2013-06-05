@@ -1,9 +1,29 @@
 module Main where
-import Test.QuickCheck
+import Data.Monoid
 import Control.Applicative ((<$>))
+
+import Test.Framework
+import Test.Framework.Providers.HUnit
+import Test.Framework.Providers.QuickCheck2
+import Test.HUnit
+import Test.QuickCheck
+
 import Terminal.Parser
 import Terminal.Terminal
 import Terminal.Types
+
+main :: IO ()
+main = defaultMainWithOpts
+       [ testCase "rev" testRev
+       , testProperty "safeCursor" prop_SafeCursor
+       , testProperty "parseWithoutTooMuchLeftover" prop_ParseWithoutTooMuchLeftover
+       ] mempty
+
+testRev :: Assertion
+testRev = reverse [1, 2, 3] @?= [3, 2, 1]
+
+propListRevRevId :: [Int] -> Property
+propListRevRevId xs = not (null xs) ==> reverse (reverse xs) == xs
 
 -- Parser tests
 newtype InputStream = InputStream String deriving Show
@@ -34,11 +54,9 @@ instance Arbitrary TerminalAction where
 handleActions [] t = t
 handleActions (a : as) t = handleActions as (applyAction a t)
 
+-- |Make sure that the cursor always is within bounds
 prop_SafeCursor a =
     let t = (handleActions a defaultTerm)
         (y, x) = cursorPos t in
     x >= 1 && y >= 1 && x <= cols t && y <= rows t
 
-main = do
-    quickCheck prop_SafeCursor
-    quickCheck prop_ParseWithoutTooMuchLeftover
