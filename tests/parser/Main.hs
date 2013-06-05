@@ -12,7 +12,7 @@ import Terminal.Parser
 import Terminal.Terminal
 import Terminal.Types
 
--- |This section contains unit tests to validate the parser, e.g., to ensure
+-- |This section contains unit tests to validate the parser, that is to ensure
 -- that the incoming character stream is correctly translated into
 -- `TerminalAction`s. This fact is clearly expressed by the function signature
 -- of the assertion function `parsesTo` which is used in the assertions below.
