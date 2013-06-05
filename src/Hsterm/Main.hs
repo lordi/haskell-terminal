@@ -22,7 +22,7 @@ import System.Posix.Terminal hiding (TerminalState)
 import Control.Concurrent
 import Control.Applicative hiding (many)
 
-import Terminal.Parser
+import Terminal.Parser (parseANSI)
 import Terminal.Terminal
 import Terminal.Types
 
@@ -148,7 +148,7 @@ runTerminal a in_ out = do
         s <- readIORef a
 
         -- Parse the input buffer for characters or ANSI sequences
-        Right (actions, leftover) <- return $ play $ (inBuffer s) ++ [c]
+        Right (actions, leftover) <- return $ parseANSI $ (inBuffer s) ++ [c]
 
         -- Apply all the actions to the terminal state
         forM actions $ \x -> modifyIORef a $ applyAction x

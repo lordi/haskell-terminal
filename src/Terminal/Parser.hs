@@ -1,4 +1,4 @@
-module Terminal.Parser where
+module Terminal.Parser (parseANSI) where
 import Control.Monad
 import Control.Applicative hiding (many, (<|>))
 import Control.Monad.State
@@ -32,8 +32,8 @@ simplify (ANSIAction [y,x] 'H') = SetCursor y x
 simplify (ANSIAction [y,x] 'f') = SetCursor y x
 simplify x = x
 
-play :: String -> Either ParseError ([TerminalAction], String)
-play s = parse pxxx "" s
+parseANSI :: String -> Either ParseError ([TerminalAction], String)
+parseANSI s = parse pxxx "" s
 
 pnum = read `fmap` many1 digit
 
@@ -71,7 +71,7 @@ stdinReader =
     forever $ do
         (liftIO getChar) >>= \x -> modify $ \y -> y ++ [x]
         s <- get
-        case (play s) of
+        case (parseANSI s) of
             Right (p, leftover) -> (liftIO $ print (p, leftover)) >> put leftover
             Left b -> (liftIO $ print (b)) -- >> (liftIO $ exitFailure)
         return ()
@@ -81,6 +81,6 @@ stdinReader =
     {-
 main = do
     hSetBuffering stdin NoBuffering
-    print $ play "wldjawlkdj1234\a\n\n\ESC[0m\ESC[1;6m\ESC[2K\ESC[A\n12\n"
-    print $ play "|M}\210\195\238\ESC[;\171\&2`[ZZZ_`__a\\a]\\aaa`_Z]["
+    print $ parseANSI "wldjawlkdj1234\a\n\n\ESC[0m\ESC[1;6m\ESC[2K\ESC[A\n12\n"
+    print $ parseANSI "|M}\210\195\238\ESC[;\171\&2`[ZZZ_`__a\\a]\\aaa`_Z]["
     runStateT stdinReader ""-}

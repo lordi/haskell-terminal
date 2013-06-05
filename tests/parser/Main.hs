@@ -28,19 +28,19 @@ instance Arbitrary InputStream where
         ])
 
 prop_NotManyCharsLeftOver (InputStream str) =
-    let Right (x, s) = play str in
+    let Right (x, s) = parseANSI str in
     length s < 15
 
 testSetCursor :: Assertion
-testSetCursor = let Right result = play "A\ESC[H\ESC[2;2H" in
+testSetCursor = let Right result = parseANSI "A\ESC[H\ESC[2;2H" in
           result @?= ([CharInput 'A', SetCursor 1 1, SetCursor 2 2], "")
 
 testInvalidSetCursor :: Assertion
-testInvalidSetCursor = let Right result = play "\ESC[H\ESC[2;2;X\ESC[5;1H" in
+testInvalidSetCursor = let Right result = parseANSI "\ESC[H\ESC[2;2;X\ESC[5;1H" in
           result @?= ([SetCursor 1 1, Ignored, SetCursor 5 1], "")
 
 testMoveCursor :: Assertion
-testMoveCursor = let Right result = play "A\ESC[A\ESCA\ESC[10B" in
+testMoveCursor = let Right result = parseANSI "A\ESC[A\ESCA\ESC[10B" in
           result @?= ([CharInput 'A', CursorUp 1, Ignored, CursorDown 10], "")
 
 main :: IO ()
