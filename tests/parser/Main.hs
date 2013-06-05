@@ -31,11 +31,26 @@ testMoveCursor = "A\ESC[A\ESCA\ESC[10B"
 testCharInput = "A2$?"
         `parsesTo` [CharInput 'A', CharInput '2', CharInput '$', CharInput '?']
 
+testSetDisplayAttributes1 = "\ESC[0m"
+        `parsesTo` [SetAttributeMode [ResetAllAttributes]]
+testSetDisplayAttributes2 = "\ESC[31;40m"
+        `parsesTo` [SetAttributeMode [ForegroundRed, BackgroundBlack]]
+testSetDisplayAttributes3 = "\ESC[37;4mU\ESC[0m"
+        `parsesTo` [SetAttributeMode [ForegroundWhite, Underscore],
+                    CharInput 'U',
+                    SetAttributeMode [ResetAllAttributes]]
+testSetDisplayAttributes4 = "\ESC[30;5;43m"
+        `parsesTo` [SetAttributeMode [ForegroundBlack, Blink, BackgroundYellow]]
+
 unitTests =
        [ testCase "testSetCursor" testSetCursor
        , testCase "testInvalidSetCursor" testInvalidSetCursor
        , testCase "testMoveCursor" testMoveCursor
        , testCase "testCharInput" testCharInput
+       , testCase "testSetDisplayAttributes1" testSetDisplayAttributes1
+       , testCase "testSetDisplayAttributes2" testSetDisplayAttributes2
+       , testCase "testSetDisplayAttributes3" testSetDisplayAttributes3
+       , testCase "testSetDisplayAttributes4" testSetDisplayAttributes4
        ]
 
 -- |The second section of this file consists of QuickCheck properties to ensure

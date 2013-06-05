@@ -30,6 +30,7 @@ simplify (ANSIAction [] 'H') = SetCursor 1 1
 simplify (ANSIAction [] 'f') = SetCursor 1 1
 simplify (ANSIAction [y,x] 'H') = SetCursor y x
 simplify (ANSIAction [y,x] 'f') = SetCursor y x
+simplify (ANSIAction attrModeNumbers 'm') = SetAttributeMode (map toEnum attrModeNumbers)
 simplify x = x
 
 parseANSI :: String -> Either ParseError ([TerminalAction], String)
