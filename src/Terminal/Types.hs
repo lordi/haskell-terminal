@@ -35,5 +35,5 @@ data TerminalAction =
      | KeypadKeysApplicationsMode
      | KeypadKeysNumericMode
      | Ignored
-     deriving Show
+     deriving (Show, Eq)
 

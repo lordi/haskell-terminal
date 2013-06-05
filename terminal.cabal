@@ -16,7 +16,7 @@ Executable hsterm
   Build-Depends: base >= 3 && < 5, containers, mtl, stm, random, array
   Build-Depends: time, GLUT, OpenGLRaw, GLURaw, OpenGL, parsec, unix, process
 
-test-suite Test
+test-suite TerminalTests
   type:            exitcode-stdio-1.0
   x-uses-tf:       true
   build-depends:   
@@ -26,6 +26,18 @@ test-suite Test
                    test-framework-quickcheck2,
                    HUnit,
                    test-framework-hunit
-  hs-source-dirs:  tests, src
+  hs-source-dirs:  tests/terminal, src
   main-is:         Main.hs
 
+test-suite ParserTests
+  type:            exitcode-stdio-1.0
+  x-uses-tf:       true
+  build-depends:   
+                   base >= 4 && < 5,
+                   QuickCheck >= 2.4,
+                   test-framework >= 0.4.1,
+                   test-framework-quickcheck2,
+                   HUnit,
+                   test-framework-hunit
+  hs-source-dirs:  tests/parser, src
+  main-is:         Main.hs

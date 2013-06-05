@@ -16,39 +16,20 @@ main :: IO ()
 main = defaultMainWithOpts
        [ testCase "rev" testRev
        , testProperty "safeCursor" prop_SafeCursor
-       , testProperty "parseWithoutTooMuchLeftover" prop_ParseWithoutTooMuchLeftover
        ] mempty
 
 testRev :: Assertion
 testRev = reverse [1, 2, 3] @?= [3, 2, 1]
 
-propListRevRevId :: [Int] -> Property
-propListRevRevId xs = not (null xs) ==> reverse (reverse xs) == xs
-
--- Parser tests
-newtype InputStream = InputStream String deriving Show
-
-instance Arbitrary InputStream where
-    arbitrary = InputStream . concat <$> (listOf1 $ oneof [
-        return "\ESC[",
-        return ";",
-        listOf1 $ choose ('a', 'z'),
-        show <$> (choose (0, 100) :: Gen Int),
-        listOf1 $ choose ('\x00', '\xFF')
-        ])
-
-prop_ParseWithoutTooMuchLeftover (InputStream str) =
-    let Right (x, s) = play str in
-    length s < 15
-
 -- TerminalAction tests
 instance Arbitrary TerminalAction where
     arbitrary = oneof [
         CharInput <$> choose ('a', 'Z'),
-        CursorUp <$> choose (1,5),
-        CursorDown <$> choose (1,5),
-        CursorForward <$> choose (1,5),
-        CursorBackward <$> choose (1,5)
+        CursorUp <$> choose (1,50),
+        CursorDown <$> choose (1,50),
+        CursorForward <$> choose (1,50),
+        CursorBackward <$> choose (1,50),
+        SetCursor 34 <$> choose (1, 112)
         ]
 
 handleActions [] t = t
