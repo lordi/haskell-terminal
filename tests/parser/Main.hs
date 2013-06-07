@@ -34,13 +34,13 @@ testCharInput = "A2$?"
 testSetDisplayAttributes1 = "\ESC[0m"
         `parsesTo` [SetAttributeMode [ResetAllAttributes]]
 testSetDisplayAttributes2 = "\ESC[31;40m"
-        `parsesTo` [SetAttributeMode [ForegroundRed, BackgroundBlack]]
+        `parsesTo` [SetAttributeMode [Foreground Red, Background Black]]
 testSetDisplayAttributes3 = "\ESC[37;4mU\ESC[0m"
-        `parsesTo` [SetAttributeMode [ForegroundWhite, Underscore],
+        `parsesTo` [SetAttributeMode [Foreground White, Underscore],
                     CharInput 'U',
                     SetAttributeMode [ResetAllAttributes]]
 testSetDisplayAttributes4 = "\ESC[30;5;43m"
-        `parsesTo` [SetAttributeMode [ForegroundBlack, Blink, BackgroundYellow]]
+        `parsesTo` [SetAttributeMode [Foreground Black, Blink, Background Yellow]]
 
 unitTests =
        [ testCase "testSetCursor" testSetCursor

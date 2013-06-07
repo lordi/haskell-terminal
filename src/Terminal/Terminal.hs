@@ -16,6 +16,9 @@ import Control.Applicative hiding (many)
 import Terminal.Parser
 import Terminal.Types
 
+defaultForegroundColor = White
+defaultBackgroundColor = Black
+
 emptyChar = ' '
 
 defaultTerm = newTerminal (24, 80)
@@ -35,7 +38,13 @@ newTerminal s@(rows, cols) = Terminal {
     scrollingRegion = (1, rows),
     screen = array
         ((1, 1), s)
-        [((y, x), emptyChar) | x <- [1..cols], y <- [1..rows]]
+        [((y, x), emptyChar) | x <- [1..cols], y <- [1..rows]],
+    foreground = array
+        ((1, 1), s)
+        [((y, x), fromEnum defaultForegroundColor) | x <- [1..cols], y <- [1..rows]],
+    background = array
+        ((1, 1), s)
+        [((y, x), fromEnum defaultBackgroundColor) | x <- [1..cols], y <- [1..rows]]
 }
 
 up t@Terminal {cursorPos = (y, x)} = safeCursor $ t { cursorPos = (y - 1, x) }

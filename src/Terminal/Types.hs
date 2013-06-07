@@ -6,17 +6,32 @@ import Data.Tuple (swap)
 
 type ScreenIndex = (Int, Int)
 
-type TerminalScreen = UArray ScreenIndex Char
+type TerminalArray = UArray ScreenIndex
+type TerminalScreen = TerminalArray Char
+type TerminalColorArray = TerminalArray Int
 
 data Terminal = Terminal {
     cursorPos :: ScreenIndex,
     screen :: TerminalScreen,
+    foreground :: TerminalColorArray,
+    background :: TerminalColorArray,
     inBuffer :: String,
     responseBuffer :: String,
     scrollingRegion :: (Int, Int),
     rows :: Int,
     cols :: Int
 }
+
+data TerminalColor =
+      Black
+    | Red
+    | Green
+    | Yellow
+    | Blue
+    | Magenta
+    | Cyan
+    | White
+    deriving (Show, Eq)
 
 data TerminalAction =
        CharInput Char
@@ -48,49 +63,33 @@ data AttributeMode =
      | Blink
      | Reverse
      | Hidden
-     | ForegroundBlack
-     | ForegroundRed
-     | ForegroundGreen
-     | ForegroundYellow
-     | ForegroundBlue
-     | ForegroundMagenta
-     | ForegroundCyan
-     | ForegroundWhite
-     | BackgroundBlack
-     | BackgroundRed
-     | BackgroundGreen
-     | BackgroundYellow
-     | BackgroundBlue
-     | BackgroundMagenta
-     | BackgroundCyan
-     | BackgroundWhite
+     | Foreground TerminalColor
+     | Background TerminalColor
      deriving (Show, Eq)
 
+instance Enum TerminalColor where
+    fromEnum = fromJust . flip lookup tableTC
+    toEnum = fromJust . flip lookup (map swap tableTC)
+tableTC = [ (Black, 0)
+          , (Red, 1)
+          , (Green, 2)
+          , (Yellow, 3)
+          , (Blue, 4)
+          , (Magenta, 5)
+          , (Cyan, 6)
+          , (White, 7)
+          ]
+
 instance Enum AttributeMode where
-    fromEnum = fromJust . flip lookup table
-    toEnum = fromJust . flip lookup (map swap table)
-table = [ (ResetAllAttributes, 0)
-        , (Bright, 1)
-        , (Dim, 2)
-        , (Underscore, 4)
-        , (Blink, 5)
-        , (Reverse, 7)
-        , (Hidden, 8)
-        , (ForegroundBlack, 30)
-        , (ForegroundRed, 31)
-        , (ForegroundGreen, 32)
-        , (ForegroundYellow, 33)
-        , (ForegroundBlue, 34)
-        , (ForegroundMagenta, 35)
-        , (ForegroundCyan, 36)
-        , (ForegroundWhite, 37)
-        , (BackgroundBlack, 40)
-        , (BackgroundRed, 41)
-        , (BackgroundGreen, 42)
-        , (BackgroundYellow, 43)
-        , (BackgroundBlue, 44)
-        , (BackgroundMagenta, 45)
-        , (BackgroundCyan, 46)
-        , (BackgroundWhite, 47)
-        ]
+    fromEnum = fromJust . flip lookup tableAM
+    toEnum = fromJust . flip lookup (map swap tableAM)
+tableAM = [ (ResetAllAttributes, 0)
+          , (Bright, 1)
+          , (Dim, 2)
+          , (Underscore, 4)
+          , (Blink, 5)
+          , (Reverse, 7)
+          , (Hidden, 8)
+          ] ++ [(Foreground tcol, 30 + fromEnum tcol) | tcol <- [Black .. White]]
+            ++ [(Background tcol, 40 + fromEnum tcol) | tcol <- [Black .. White]]
 
