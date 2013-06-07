@@ -1,7 +1,7 @@
 module Terminal.Types where
 import Data.Array.Unboxed
 import Data.Char
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, fromMaybe)
 import Data.Tuple (swap)
 
 type ScreenIndex = (Int, Int)
@@ -56,7 +56,8 @@ data TerminalAction =
      deriving (Show, Eq)
 
 data AttributeMode =
-       ResetAllAttributes
+       InvalidAttributeMode
+     | ResetAllAttributes
      | Bright
      | Dim
      | Underscore
@@ -82,7 +83,7 @@ tableTC = [ (Black, 0)
 
 instance Enum AttributeMode where
     fromEnum = fromJust . flip lookup tableAM
-    toEnum = fromJust . flip lookup (map swap tableAM)
+    toEnum = (fromMaybe InvalidAttributeMode) . flip lookup (map swap tableAM)
 tableAM = [ (ResetAllAttributes, 0)
           , (Bright, 1)
           , (Dim, 2)

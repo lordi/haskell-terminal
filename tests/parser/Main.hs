@@ -41,6 +41,8 @@ testSetDisplayAttributes3 = "\ESC[37;4mU\ESC[0m"
                     SetAttributeMode [ResetAllAttributes]]
 testSetDisplayAttributes4 = "\ESC[30;5;43m"
         `parsesTo` [SetAttributeMode [Foreground Black, Blink, Background Yellow]]
+testSetDisplayAttributes5 = "\ESC[1111m\ESC[49m"
+        `parsesTo` [SetAttributeMode [InvalidAttributeMode], SetAttributeMode [InvalidAttributeMode]]
 
 unitTests =
        [ testCase "testSetCursor" testSetCursor
@@ -51,6 +53,7 @@ unitTests =
        , testCase "testSetDisplayAttributes2" testSetDisplayAttributes2
        , testCase "testSetDisplayAttributes3" testSetDisplayAttributes3
        , testCase "testSetDisplayAttributes4" testSetDisplayAttributes4
+       , testCase "testSetDisplayAttributes5" testSetDisplayAttributes5
        ]
 
 -- |The second section of this file consists of QuickCheck properties to ensure
