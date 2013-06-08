@@ -44,7 +44,9 @@ newTerminal s@(rows, cols) = Terminal {
         [((y, x), fromEnum defaultForegroundColor) | x <- [1..cols], y <- [1..rows]],
     background = array
         ((1, 1), s)
-        [((y, x), fromEnum defaultBackgroundColor) | x <- [1..cols], y <- [1..rows]]
+        [((y, x), fromEnum defaultBackgroundColor) | x <- [1..cols], y <- [1..rows]],
+    currentForeground = fromEnum defaultForegroundColor,
+    currentBackground = fromEnum defaultBackgroundColor
 }
 
 up t@Terminal {cursorPos = (y, x)} = safeCursor $ t { cursorPos = (y - 1, x) }
@@ -92,6 +94,11 @@ scrollTerminalDown term@Terminal { screen = s, scrollingRegion = r@(startrow, en
 clearLines :: [Int] -> Terminal -> Terminal
 clearLines rows term@Terminal { screen = s } =
     term { screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-rows] }
+
+applyAttributeMode :: Terminal -> AttributeMode -> Terminal
+applyAttributeMode term (Foreground c) = term { currentForeground = fromEnum c }
+applyAttributeMode term (Background c) = term { currentBackground = fromEnum c }
+applyAttributeMode term _ = term -- TODO Implement blink, reverse, underline etc.
 
 applyAction :: TerminalAction -> Terminal -> Terminal
 applyAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
@@ -142,5 +149,8 @@ applyAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
             -- Erases from the current cursor position to the end of the current line. 
             ANSIAction _ 'K'  -> term { screen = s // [((y,x_), emptyChar)|x_<-[x..80]] }
 
-            _                 -> trace ("\nunsupported seq: " ++ show act) term
+            -- Attribute mode / color handling
+            SetAttributeMode modes -> foldl applyAttributeMode term modes
+
+            _                 -> trace ("\nUnimplemented action: " ++ show act) term
 

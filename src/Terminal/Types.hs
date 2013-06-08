@@ -19,19 +19,11 @@ data Terminal = Terminal {
     responseBuffer :: String,
     scrollingRegion :: (Int, Int),
     rows :: Int,
-    cols :: Int
-}
+    cols :: Int,
 
-data TerminalColor =
-      Black
-    | Red
-    | Green
-    | Yellow
-    | Blue
-    | Magenta
-    | Cyan
-    | White
-    deriving (Show, Eq)
+    currentForeground :: Int,
+    currentBackground :: Int
+}
 
 data TerminalAction =
        CharInput Char
@@ -55,18 +47,16 @@ data TerminalAction =
      | Ignored
      deriving (Show, Eq)
 
-data AttributeMode =
-       InvalidAttributeMode
-     | ResetAllAttributes
-     | Bright
-     | Dim
-     | Underscore
-     | Blink
-     | Reverse
-     | Hidden
-     | Foreground TerminalColor
-     | Background TerminalColor
-     deriving (Show, Eq)
+data TerminalColor =
+      Black
+    | Red
+    | Green
+    | Yellow
+    | Blue
+    | Magenta
+    | Cyan
+    | White
+    deriving (Show, Eq)
 
 instance Enum TerminalColor where
     fromEnum = fromJust . flip lookup tableTC
@@ -80,6 +70,19 @@ tableTC = [ (Black, 0)
           , (Cyan, 6)
           , (White, 7)
           ]
+
+data AttributeMode =
+       InvalidAttributeMode
+     | ResetAllAttributes
+     | Bright
+     | Dim
+     | Underscore
+     | Blink
+     | Reverse
+     | Hidden
+     | Foreground TerminalColor
+     | Background TerminalColor
+     deriving (Show, Eq)
 
 instance Enum AttributeMode where
     fromEnum = fromJust . flip lookup tableAM
