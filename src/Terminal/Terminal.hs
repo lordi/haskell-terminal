@@ -114,8 +114,11 @@ applyAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
             CharInput '\n'      -> term { cursorPos = (y + 1, 1) }
             CharInput '\r'      -> term { cursorPos = (y, 1) }
             CharInput '\b'      -> term { screen = s // [(pos, emptyChar)], cursorPos = (y, x - 1) }
-            CharInput c         -> term { screen = s // [(pos, c)], cursorPos = (y, x + 1) }
-
+            CharInput c         -> term { 
+                                    screen = s // [(pos, c)],
+                                    foreground = (foreground term) // [(pos, currentForeground term)],
+                                    background = (background term) // [(pos, currentBackground term)],
+                                    cursorPos = (y, x + 1) }
             CursorUp n          -> (iterate up term) !! n
             CursorDown n        -> (iterate down term) !! n
             CursorForward n     -> (iterate right term) !! n
