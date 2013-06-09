@@ -4,6 +4,7 @@ import System.Process
 import Data.Array.Unboxed
 import Data.IORef
 import Data.Char
+import Data.Maybe (fromJust)
 -- import Control.Monad
 import Control.Monad.State hiding (state, get, State)
 import System.IO
@@ -25,6 +26,7 @@ import Control.Applicative hiding (many)
 import Terminal.Parser (parseANSI)
 import Terminal.Terminal
 import Terminal.Types
+import qualified Terminal.Types as T
 
 import Hsterm.State
 import Hsterm.ShaderUtils
@@ -35,6 +37,18 @@ numColumns = 80
 numRows = 24
 screenWidth = 9 * numColumns
 screenHeight = 16 * numRows
+
+ansiColorToColor3 :: TerminalColor -> Color3 GLfloat
+ansiColorToColor3 = fromJust . flip lookup x
+        where x = [ (T.Black, Color3 0 0 0) 
+                  , (T.Red, Color3 1 0 0)
+                  , (T.Green, Color3 0 1 0)
+                  , (T.Yellow, Color3 0 1 1)
+                  , (T.Blue, Color3 0 0 1)
+                  , (T.Magenta, Color3 1 1 0)
+                  , (T.Cyan, Color3 1 0 1)
+                  , (T.White, Color3 1 1 1) ] :: [(TerminalColor, Color3 GLfloat)]
+
 
 initDisplay = do
   _ <- getArgsAndInitialize
@@ -102,6 +116,13 @@ displayHandler state = do
         preservingMatrix $ do
           loadIdentity
           sth
+
+  -- Render a quad in the background color
+  forM_ (indices $ screen term) $ \idx@(y, x) -> do
+    preservingMatrix $ do
+        translate (Vector3 (fromIntegral x - 1) (fromIntegral y - 1) (0 :: GLfloat))
+        color $ ansiColorToColor3 (toEnum ((background term) ! idx))
+        unitQuad
 
   -- Show the terminal buffer, this will be replaced by a more sophisticated
   -- text output that allows for zooming etc.

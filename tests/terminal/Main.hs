@@ -39,13 +39,15 @@ testColors2 = TestCase (do
                                    SetAttributeMode [Background White],
                                    CharInput 'i',
                                    CharInput '\n',
-                                   SetAttributeMode [Background Yellow, Blink],
+                                   SetAttributeMode [Foreground Yellow, Blink],
                                    CharInput 'X',
-                                   CharInput '\r',
-                                   SetAttributeMode [Background Black]
+                                   SetAttributeMode  [ResetAllAttributes],
+                                   CharInput '\n',
+                                   CharInput 'Y',
+                                   CharInput '\r'
                                   ]
-                assertEqual "cursor is at the beginning of second row"
-                    (cursorPos term) (2, 1)
+                assertEqual "cursor is at the beginning of third row"
+                    (cursorPos term) (3, 1)
                 assertEqual "foreground color is correct in first char" 
                     ((foreground term) ! (1, 1)) (fromEnum Green)
                 assertEqual "background color is correct in first char" 
@@ -53,7 +55,9 @@ testColors2 = TestCase (do
                 assertEqual "background color is correct in second char" 
                     ((background term) ! (1, 2)) (fromEnum White)
                 assertEqual "foreground color is correct in second row" 
-                    ((background term) ! (2, 1)) (fromEnum Yellow)
+                    ((foreground term) ! (2, 1)) (fromEnum Yellow)
+                assertEqual "background color is default in third row" 
+                    ((background term) ! (3, 1)) (fromEnum Black)
                 )
 
 testClearSreen = TestCase (do

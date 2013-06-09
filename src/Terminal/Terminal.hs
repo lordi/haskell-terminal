@@ -96,6 +96,10 @@ clearLines rows term@Terminal { screen = s } =
     term { screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-rows] }
 
 applyAttributeMode :: Terminal -> AttributeMode -> Terminal
+applyAttributeMode term ResetAllAttributes = term {
+                                                currentForeground = fromEnum defaultForegroundColor,
+                                                currentBackground = fromEnum defaultBackgroundColor
+                                                }
 applyAttributeMode term (Foreground c) = term { currentForeground = fromEnum c }
 applyAttributeMode term (Background c) = term { currentBackground = fromEnum c }
 applyAttributeMode term _ = term -- TODO Implement blink, reverse, underline etc.
