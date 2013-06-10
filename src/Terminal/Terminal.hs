@@ -76,7 +76,6 @@ scrollIndexDown (startrow, endrow) (y, x)
     | y == endrow                  = (startrow, x)
     | otherwise                    = (y, x)
 
-scrollScreenUp :: (Int, Int) -> TerminalScreen -> TerminalScreen
 scrollScreenUp r@(startrow, endrow) screen =
     ixmap ((1, 1), (24, 80)) (scrollIndexUp r) screen
 
@@ -85,15 +84,27 @@ scrollScreenDown r@(startrow, endrow) screen =
 
 scrollTerminalUp :: Terminal -> Terminal
 scrollTerminalUp term@Terminal { screen = s, scrollingRegion = r@(startrow, endrow) } =
-    clearLines [startrow] $ term { screen = scrollScreenUp (scrollingRegion term) s }
+    clearLines [startrow] $ term {
+        screen = scrollScreenUp (scrollingRegion term) s,
+        foreground = scrollScreenUp (scrollingRegion term) (foreground term),
+        background = scrollScreenUp (scrollingRegion term) (background term)
+    }
 
 scrollTerminalDown :: Terminal -> Terminal
 scrollTerminalDown term@Terminal { screen = s, scrollingRegion = r@(startrow, endrow) } =
-    clearLines [endrow] $ term { screen = scrollScreenDown (scrollingRegion term) s }
+    clearLines [endrow] $ term {
+        screen = scrollScreenDown (scrollingRegion term) s,
+        foreground = scrollScreenDown (scrollingRegion term) (foreground term),
+        background = scrollScreenDown (scrollingRegion term) (background term)
+    }
 
 clearLines :: [Int] -> Terminal -> Terminal
 clearLines rows term@Terminal { screen = s } =
-    term { screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-rows] }
+    term {
+        screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-rows],
+        foreground = (foreground term) // [((y_,x_), fromEnum defaultForegroundColor)|x_<-[1..80],y_<-rows],
+        background = (background term) // [((y_,x_), fromEnum defaultBackgroundColor)|x_<-[1..80],y_<-rows]
+        }
 
 applyAttributeMode :: Terminal -> AttributeMode -> Terminal
 applyAttributeMode term ResetAllAttributes = term {

@@ -5,7 +5,8 @@ import Graphics.Rendering.OpenGL.GLU (perspective)
 import Graphics.Rendering.GLU.Raw
 import Graphics.Rendering.OpenGL.GL.FramebufferObjects
 import Graphics.Rendering.OpenGL.Raw.ARB.Compatibility (glPushMatrix, glPopMatrix)
-import Graphics.UI.GLUT hiding (Bool, Float)
+import Graphics.UI.GLUT hiding (Bool, Float, Font, fontHeight, fontWidth)
+import Graphics.Rendering.FTGL (Font)
 
 import Data.Time.Clock (getCurrentTime)
 import qualified Data.Time.Clock as C
@@ -19,7 +20,10 @@ data State = State {
     lastKeystrokeTime :: IORef C.UTCTime,
     backgroundProgram :: IORef (Maybe Program),
     foregroundProgram :: IORef (Maybe Program),
-    cursorProgram :: IORef (Maybe Program)
+    cursorProgram :: IORef (Maybe Program),
+    currentFont :: IORef (Maybe Font),
+    fontWidth :: IORef Float,
+    fontHeight :: IORef Float
 }
 
 makeState :: IO State
@@ -32,6 +36,9 @@ makeState = do
     backgroundProgram' <- newIORef Nothing
     foregroundProgram' <- newIORef Nothing
     cursorProgram' <- newIORef Nothing
+    currentFont' <- newIORef Nothing
+    fontWidth' <- newIORef 0.0
+    fontHeight' <- newIORef 0.0
 
     return State {
         terminal = terminal',
@@ -41,5 +48,8 @@ makeState = do
 
         backgroundProgram = backgroundProgram',
         foregroundProgram = foregroundProgram',
-        cursorProgram = cursorProgram'
+        cursorProgram = cursorProgram',
+        currentFont = currentFont',
+        fontHeight = fontHeight',
+        fontWidth = fontWidth'
     }

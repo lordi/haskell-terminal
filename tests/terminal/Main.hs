@@ -71,6 +71,20 @@ testClearSreen = TestCase (do
                 assertEqual "first char in first row is empty"
                     (screen term ! (1, 1)) ' ')
 
+testColorsDoScroll = TestCase (do
+                let term = applyDef ([
+                                   SetAttributeMode [Foreground Yellow, Background Green],
+                                   CharInput 'X',
+                                   SetAttributeMode  [ResetAllAttributes]
+                                   ] ++ (take 50 $ repeat (CharInput '\n')))
+                assertEqual "cursor is at the beginning of last row"
+                    (cursorPos term) (rows term, 1)
+                assertEqual "background color is default in (1, 1)"
+                    ((background term) ! (1, 1)) (fromEnum Black)
+                assertEqual "foreground color is default in (1, 1)"
+                    ((foreground term) ! (1, 1)) (fromEnum White)
+                )
+
 -- TerminalAction tests
 instance Arbitrary TerminalAction where
     arbitrary = oneof [
@@ -90,7 +104,7 @@ prop_SafeCursor a =
 
 main :: IO ()
 main = defaultMainWithOpts (
-        concat (hUnitTestToTests <$> [testColors2, testClearSreen])
+        concat (hUnitTestToTests <$> [testColors2, testClearSreen, testColorsDoScroll])
         ++
        [ testCase "testColors" testColors
        , testProperty "safeCursor" prop_SafeCursor

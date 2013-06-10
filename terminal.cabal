@@ -8,6 +8,7 @@ Maintainer: hgraeule@uos.de
 Build-Type: Simple
 Cabal-Version: >=1.2
 Extra-source-files: README.md
+Data-Files: data/*.ttf data/*.sh
 
 Executable hsterm
   Main-is: Main.hs
@@ -15,6 +16,7 @@ Executable hsterm
   Extensions: CPP
   Build-Depends: base >= 3 && < 5, containers, mtl, stm, random, array
   Build-Depends: time, GLUT, OpenGLRaw, GLURaw, OpenGL, parsec, unix, process
+  Build-Depends: FTGL >= 1.333
 
 test-suite TerminalTests
   type:            exitcode-stdio-1.0
