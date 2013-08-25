@@ -1,5 +1,5 @@
 {-# LANGUAGE Rank2Types #-}
-module Hsterm.Main where
+module Main where
 import System.Process
 import Data.Array.Unboxed
 import Data.IORef

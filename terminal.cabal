@@ -12,11 +12,18 @@ Data-Files: data/*.ttf data/*.sh
 
 Executable hsterm
   Main-is: Main.hs
-  Hs-Source-Dirs: src
+  Hs-Source-Dirs: src/Hsterm, src
   Extensions: CPP
   Build-Depends: base >= 3 && < 5, containers, mtl, stm, random, array
   Build-Depends: time, GLUT, OpenGLRaw, GLURaw, OpenGL, parsec, unix, process
   Build-Depends: FTGL >= 1.333
+
+Executable hstermplay
+  Main-is: Main.hs
+  Hs-Source-Dirs: src/Hstermplay, src
+  Extensions: CPP
+  Build-Depends: base >= 3 && < 5, containers, mtl, stm, random, array
+  Build-Depends: time, parsec, unix, process
 
 test-suite TerminalTests
   type:            exitcode-stdio-1.0
