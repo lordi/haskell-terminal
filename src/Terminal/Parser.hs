@@ -25,7 +25,6 @@ simplify (ANSIAction [n] 'C') = CursorForward n
 simplify (ANSIAction [] 'D') = CursorBackward 1
 simplify (ANSIAction [n] 'D') = CursorBackward n
 simplify (ANSIAction [start, end] 'r') = SetScrollingRegion start end
-
 simplify (ANSIAction [] 'H') = SetCursor 1 1
 simplify (ANSIAction [] 'f') = SetCursor 1 1
 simplify (ANSIAction [y,x] 'H') = SetCursor y x
@@ -40,19 +39,13 @@ pnum = read `fmap` many1 digit
 
 pxxx :: Parser ([TerminalAction], String)
 pxxx = do
-    x <- many (pchar <|> pansi)
+    x <- many (pansi <|> pchar)
     i <- getInput
     return (map simplify x, i)
 
 pansi :: Parser (TerminalAction)
-pansi = try (do
-    string "\ESC["
-    optionMaybe (char '?')
-    param <- optionMaybe pnum
-    params <- many (char ';' >> pnum)
-    c <- letter
-    return $ ANSIAction (maybeToList param ++ params) c
-    )
+pansi = try (pStandardANSISeq)
+    <|> try (pSetTerminalTitle)
     <|> try (string "\ESCM" >> return ScrollUp)
     <|> try (string "\ESCD" >> return ScrollDown)
     <|> try (string "\ESC=" >> return KeypadKeysApplicationsMode)
@@ -60,7 +53,20 @@ pansi = try (do
     <|> try (string "\ESC(B" >> return Ignored)
     <|> try (string "\ESC#8" >> return Ignored)
     -- Catch invalid and not implemented sequences
-    <|> try (string "\ESC" >> manyTill anyNonEscapeChar (letter <|> try (char '\ESC')) >> return Ignored)
+    <|> try (string "\ESC" >> notFollowedBy (string "]0;") >> manyTill anyNonEscapeChar (letter <|> try (char '\ESC')) >> return Ignored)
+
+pStandardANSISeq = do
+    string "\ESC["
+    optionMaybe (char '?')
+    param <- optionMaybe pnum
+    params <- many (char ';' >> pnum)
+    c <- letter
+    return $ ANSIAction (maybeToList param ++ params) c
+
+pSetTerminalTitle = do
+    string "\ESC]0;"
+    title <- manyTill (satisfy (/= '\007')) (try (char '\007'))
+    return (SetTerminalTitle title)
 
 anyNonEscapeChar = satisfy (/= '\ESC')
 

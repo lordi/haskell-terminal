@@ -60,6 +60,12 @@ testColors2 = TestCase (do
                     ((background term) ! (3, 1)) (fromEnum Black)
                 )
 
+testSetTerminalTitle = TestCase (do
+                let s = "There is always money in the banana stand"
+                    term = applyDef [SetTerminalTitle "x", CharInput 'a', SetTerminalTitle s]
+                assertEqual "title is set"
+                    (terminalTitle term) s)
+
 testClearSreen = TestCase (do
                 let term = applyDef [CharInput 'H',
                                      CharInput 'i',
@@ -104,7 +110,7 @@ prop_SafeCursor a =
 
 main :: IO ()
 main = defaultMainWithOpts (
-        concat (hUnitTestToTests <$> [testColors2, testClearSreen, testColorsDoScroll])
+        concat (hUnitTestToTests <$> [testColors2, testClearSreen, testColorsDoScroll, testSetTerminalTitle])
         ++
        [ testCase "testColors" testColors
        , testProperty "safeCursor" prop_SafeCursor

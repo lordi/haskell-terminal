@@ -17,6 +17,7 @@ data Terminal = Terminal {
     background :: TerminalColorArray,
     inBuffer :: String,
     responseBuffer :: String,
+    terminalTitle :: String,
     scrollingRegion :: (Int, Int),
     rows :: Int,
     cols :: Int,
@@ -44,6 +45,7 @@ data TerminalAction =
      | KeypadKeysApplicationsMode
      | KeypadKeysNumericMode
      | SetAttributeMode [AttributeMode]
+     | SetTerminalTitle String
      | Ignored
      deriving (Show, Eq)
 

@@ -43,6 +43,8 @@ testSetDisplayAttributes4 = "\ESC[30;5;43m"
         `parsesTo` [SetAttributeMode [Foreground Black, Blink, Background Yellow]]
 testSetDisplayAttributes5 = "\ESC[1111m\ESC[49m"
         `parsesTo` [SetAttributeMode [InvalidAttributeMode], SetAttributeMode [InvalidAttributeMode]]
+testSetTerminalTitle = "\ESC]0;Chickens don't clap!\007b"
+        `parsesTo` [SetTerminalTitle "Chickens don't clap!", CharInput 'b']
 
 unitTests =
        [ testCase "testSetCursor" testSetCursor
@@ -54,6 +56,7 @@ unitTests =
        , testCase "testSetDisplayAttributes3" testSetDisplayAttributes3
        , testCase "testSetDisplayAttributes4" testSetDisplayAttributes4
        , testCase "testSetDisplayAttributes5" testSetDisplayAttributes5
+       , testCase "testSetTerminalTitle" testSetTerminalTitle       
        ]
 
 -- |The second section of this file consists of QuickCheck properties to ensure

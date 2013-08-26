@@ -46,7 +46,8 @@ newTerminal s@(rows, cols) = Terminal {
         ((1, 1), s)
         [((y, x), fromEnum defaultBackgroundColor) | x <- [1..cols], y <- [1..rows]],
     currentForeground = fromEnum defaultForegroundColor,
-    currentBackground = fromEnum defaultBackgroundColor
+    currentBackground = fromEnum defaultBackgroundColor,
+    terminalTitle = ""
 }
 
 up t@Terminal {cursorPos = (y, x)} = safeCursor $ t { cursorPos = (y - 1, x) }
@@ -166,6 +167,9 @@ applyAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
 
             -- Erases from the current cursor position to the end of the current line. 
             ANSIAction _ 'K'  -> term { screen = s // [((y,x_), emptyChar)|x_<-[x..80]] }
+            
+            -- Set the terminal title
+            SetTerminalTitle t  -> term { terminalTitle = t }
 
             -- Attribute mode / color handling
             SetAttributeMode modes -> foldl applyAttributeMode term modes
