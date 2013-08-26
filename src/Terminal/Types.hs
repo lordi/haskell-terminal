@@ -35,6 +35,8 @@ data TerminalAction =
      | CursorForward Int
      | CursorBackward Int
      | SetCursor Int Int
+     | CursorAbsoluteColumn Int
+     | CursorAbsoluteRow Int
 
      -- Scrolling
      | SetScrollingRegion Int Int

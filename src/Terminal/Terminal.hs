@@ -140,11 +140,16 @@ applyAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
             CursorForward n     -> (iterate right term) !! n
             CursorBackward n    -> (iterate left term) !! n
 
+            -- Force cursor position
+            CursorAbsoluteColumn col -> term { cursorPos = (y, col) }
+            CursorAbsoluteRow row  -> term { cursorPos = (row, x) }
+
+            -- Force cursor position
+            SetCursor row col   -> term { cursorPos = (row, col) }
+
             -- Colors, yay!
             ANSIAction _ 'm'    -> term
 
-            -- Force cursor position
-            SetCursor col row   -> term { cursorPos = (col, row) }
 
             SetScrollingRegion start end -> term { scrollingRegion = (start, end) }
             ScrollUp            -> scrollTerminalUp term
@@ -167,6 +172,7 @@ applyAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
 
             -- Erases from the current cursor position to the end of the current line. 
             ANSIAction _ 'K'  -> term { screen = s // [((y,x_), emptyChar)|x_<-[x..80]] }
+
             
             -- Set the terminal title
             SetTerminalTitle t  -> term { terminalTitle = t }
