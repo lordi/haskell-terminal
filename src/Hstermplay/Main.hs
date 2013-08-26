@@ -2,33 +2,22 @@
 -- output the last screen.
 module Main where
 import System.Environment (getArgs)
-import Data.Array.Unboxed
-import Data.Char
 import Control.Monad (foldM)
-import System.IO
-
-import System.Posix.IO
-import System.Posix.Terminal hiding (TerminalState)
-
+import System.IO (readFile)
 import Terminal.Parser (parseANSI)
-import Terminal.Terminal
+import Terminal.Terminal (defaultTerm, applyAction)
 import Terminal.Types
 import Terminal.Debug (printTerminal)
-import qualified Terminal.Types as T
+
+fromRight :: Either a b -> b
+fromRight (Right r) = r
 
 -- |Parse a string and apply the resulting TerminalActions to a default
 -- terminal.
 playScript :: String -> IO ()
 playScript str = do
-    let playCharacter term c = do
-        let -- Parse character stream
-            Right (actions, leftover) = parseANSI (inBuffer term ++ [c])
-            -- Apply all the actions to the terminal state
-            t = foldl (flip applyAction) term actions
-        return t { inBuffer = leftover }
-    resultTerm <- foldM playCharacter defaultTerm str
-    printTerminal resultTerm
-    return ()
+    let actions = fst $ fromRight $ parseANSI str
+        t = foldl (flip applyAction) defaultTerm actions
+    printTerminal t
 
-main = do
-    getArgs >>= readFile . head >>= playScript
+main = getArgs >>= readFile . head >>= playScript
