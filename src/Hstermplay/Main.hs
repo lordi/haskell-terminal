@@ -1,23 +1,17 @@
--- This program will replay the recordings of the `script` utility and
+-- |This program will replay the recordings of the `script` utility and
 -- output the last screen.
 module Main where
 import System.Environment (getArgs)
 import Control.Monad (foldM)
 import System.IO (readFile)
-import Terminal.Parser (parseANSI)
+import Terminal.Parser (parseString)
+import Terminal.Types (Terminal)
 import Terminal.Terminal (defaultTerm, applyAction)
-import Terminal.Types
 import Terminal.Debug (printTerminal)
 
-fromRight :: Either a b -> b
-fromRight (Right r) = r
-
 -- |Parse a string and apply the resulting TerminalActions to a default
--- terminal.
-playScript :: String -> IO ()
-playScript str = do
-    let actions = fst $ fromRight $ parseANSI str
-        t = foldl (flip applyAction) defaultTerm actions
-    printTerminal t
+-- terminal, return the resulting terminal.
+playScript :: String -> Terminal
+playScript s = foldl (flip applyAction) defaultTerm (parseString s)
 
-main = getArgs >>= readFile . head >>= playScript
+main = getArgs >>= readFile . head >>= return . playScript >>= printTerminal

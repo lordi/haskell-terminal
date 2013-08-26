@@ -1,4 +1,4 @@
-module Terminal.Parser (parseANSI) where
+module Terminal.Parser (parseANSI, parseString) where
 import Control.Monad
 import Control.Applicative hiding (many, (<|>))
 import Control.Monad.State
@@ -34,19 +34,22 @@ simplify (ANSIAction [y,x] 'f') = SetCursor y x
 simplify (ANSIAction attrModeNumbers 'm') = SetAttributeMode (map toEnum attrModeNumbers)
 simplify x = x
 
+parseString :: String -> [TerminalAction]
+parseString str = fst (fromRight (parseANSI str))
+                where fromRight :: Either a b -> b
+                      fromRight (Right r) = r
+
 parseANSI :: String -> Either ParseError ([TerminalAction], String)
-parseANSI s = parse pxxx "" s
+parseANSI s = parse pANSI "" s
 
-pnum = read `fmap` many1 digit
-
-pxxx :: Parser ([TerminalAction], String)
-pxxx = do
-    x <- many (pansi <|> pchar)
+pANSI :: Parser ([TerminalAction], String)
+pANSI = do
+    x <- many (pANSISequence <|> pChar)
     i <- getInput
     return (map simplify x, i)
 
-pansi :: Parser (TerminalAction)
-pansi = try (pStandardANSISeq)
+pANSISequence :: Parser (TerminalAction)
+pANSISequence = try (pStandardANSISeq)
     <|> try (pSetTerminalTitle)
     <|> try (string "\ESCM" >> return ScrollUp)
     <|> try (string "\ESCD" >> return ScrollDown)
@@ -60,8 +63,8 @@ pansi = try (pStandardANSISeq)
 pStandardANSISeq = do
     string "\ESC["
     optionMaybe (char '?')
-    param <- optionMaybe pnum
-    params <- many (char ';' >> pnum)
+    param <- optionMaybe pNumber
+    params <- many (char ';' >> pNumber)
     c <- letter
     return $ ANSIAction (maybeToList param ++ params) c
 
@@ -72,8 +75,10 @@ pSetTerminalTitle = do
 
 anyNonEscapeChar = satisfy (/= '\ESC')
 
-pchar :: Parser (TerminalAction)
-pchar = (anyNonEscapeChar >>= return . CharInput)
+pChar :: Parser (TerminalAction)
+pChar = (anyNonEscapeChar >>= return . CharInput)
+
+pNumber = read `fmap` many1 digit
 
 {-
 stdinReader =
