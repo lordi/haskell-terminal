@@ -1,5 +1,6 @@
 module Main where
 import Data.Monoid
+import System.Random (getStdGen)
 import Control.Applicative ((<$>))
 
 import Test.Framework
@@ -31,6 +32,9 @@ testMoveCursor = "A\ESC[A\ESCA\ESC[10B"
 testCharInput = "A2$?"
         `parsesTo` [CharInput 'A', CharInput '2', CharInput '$', CharInput '?']
 
+testCharInputIg = "\ESC[;nw\ESC[5652;7974;10;;;xA"
+        `parsesTo` [Ignored, CharInput 'w', Ignored, CharInput 'A']
+
 testSetDisplayAttributes1 = "\ESC[0m"
         `parsesTo` [SetAttributeMode [ResetAllAttributes]]
 testSetDisplayAttributes2 = "\ESC[31;40m"
@@ -51,6 +55,7 @@ unitTests =
        , testCase "testInvalidSetCursor" testInvalidSetCursor
        , testCase "testMoveCursor" testMoveCursor
        , testCase "testCharInput" testCharInput
+       , testCase "testCharInputIg" testCharInputIg
        , testCase "testSetDisplayAttributes1" testSetDisplayAttributes1
        , testCase "testSetDisplayAttributes2" testSetDisplayAttributes2
        , testCase "testSetDisplayAttributes3" testSetDisplayAttributes3

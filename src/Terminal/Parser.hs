@@ -5,6 +5,7 @@ import Control.Monad.State
 import System.IO
 import System.Exit
 import Data.Char
+import Data.Maybe
 import Text.Parsec
 import Text.Parsec.String
 import Debug.Trace
@@ -64,7 +65,7 @@ pStandardANSISeq = do
     string "\ESC["
     optionMaybe (char '?')
     param <- optionMaybe pNumber
-    params <- many (char ';' >> pNumber)
+    params <- manyUpTo 0 2 (char ';' >> pNumber)
     c <- letter
     return $ ANSIAction (maybeToList param ++ params) c
 
@@ -78,7 +79,13 @@ anyNonEscapeChar = satisfy (/= '\ESC')
 pChar :: Parser (TerminalAction)
 pChar = (anyNonEscapeChar >>= return . CharInput)
 
-pNumber = read `fmap` many1 digit
+-- |Apply parser p at least n and up to m times
+manyUpTo n m p = do
+    first <- count n p
+    rest <- count (m - n) (optionMaybe p) 
+    return (first ++ (catMaybes rest))
+
+pNumber = read `fmap` (manyUpTo 1 6 digit)
 
 {-
 stdinReader =
