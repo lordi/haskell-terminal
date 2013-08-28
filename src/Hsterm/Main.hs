@@ -72,8 +72,8 @@ unitQuad = do
     texCoord2f (TexCoord2 0 0); vertex3f (Vertex3   1    1    0 )
     texCoord2f (TexCoord2 0 1); vertex3f (Vertex3   1  (-0)   0 )
 
-reshapeHandler state size@(Size w h) = do
-  ss <- getScreenSize state
+reshapeHandler state size@(Size w_ h_) = do
+  ss@(Size w h) <- getScreenSize state
   viewport $= (Position 0 0, ss)
   matrixMode $= Projection
   loadIdentity
@@ -114,6 +114,7 @@ displayHandler state = do
 
         -- Render a font in the foreground color
         color $ ansiColorToColor3 (toEnum (foreground term ! idx))
+        translate $ Vector3 0 (4) (0 :: GLfloat)
         renderFont font [screen term ! idx] All
 
   -- Cursor
