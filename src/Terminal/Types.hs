@@ -86,6 +86,8 @@ data AttributeMode =
      | Hidden
      | Foreground TerminalColor
      | Background TerminalColor
+     | ResetForeground
+     | ResetBackground
      deriving (Show, Eq)
 
 instance Enum AttributeMode where
@@ -100,4 +102,5 @@ tableAM = [ (ResetAllAttributes, 0)
           , (Hidden, 8)
           ] ++ [(Foreground tcol, 30 + fromEnum tcol) | tcol <- [Black .. White]]
             ++ [(Background tcol, 40 + fromEnum tcol) | tcol <- [Black .. White]]
+            ++ [(ResetForeground, 39), (ResetBackground, 49)]
 

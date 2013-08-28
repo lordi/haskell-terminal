@@ -7,7 +7,7 @@ import Test.Framework
 import Test.Framework.Providers.HUnit
 import Test.Framework.Providers.QuickCheck2
 import Test.HUnit
-import Test.QuickCheck
+import Test.QuickCheck hiding ((==>),)
 
 import Terminal.Parser
 import Terminal.Terminal
@@ -16,39 +16,41 @@ import Terminal.Types
 -- |This section contains unit tests to validate the parser, that is to ensure
 -- that the incoming character stream is correctly translated into
 -- `TerminalAction`s. This fact is clearly expressed by the function signature
--- of the assertion function `parsesTo` which is used in the assertions below.
+-- of the assertion function parsesTo which is used in the assertions below.
 parsesTo :: String -> [TerminalAction] -> Assertion
 parsesTo str is = let Right result = parseANSI str in result @?= (is, "")
 
+(==>) = parsesTo
+
 testSetCursor = "A\ESC[H\ESC[2;2H"
-        `parsesTo` [CharInput 'A', SetCursor 1 1, SetCursor 2 2]
+        ==> [CharInput 'A', SetCursor 1 1, SetCursor 2 2]
 
 testInvalidSetCursor = "\ESC[H\ESC[2;2;X\ESC[5;1H"
-        `parsesTo` [SetCursor 1 1, Ignored, SetCursor 5 1]
+        ==> [SetCursor 1 1, Ignored, SetCursor 5 1]
 
 testMoveCursor = "A\ESC[A\ESCA\ESC[10B"
-        `parsesTo` [CharInput 'A', CursorUp 1, Ignored, CursorDown 10]
+        ==> [CharInput 'A', CursorUp 1, Ignored, CursorDown 10]
 
 testCharInput = "A2$?"
-        `parsesTo` [CharInput 'A', CharInput '2', CharInput '$', CharInput '?']
+        ==> [CharInput 'A', CharInput '2', CharInput '$', CharInput '?']
 
 testCharInputIg = "\ESC[;nw\ESC[5652;7974;10;;;xA"
-        `parsesTo` [Ignored, CharInput 'w', Ignored, CharInput 'A']
+        ==> [Ignored, CharInput 'w', Ignored, CharInput 'A']
 
 testSetDisplayAttributes1 = "\ESC[0m"
-        `parsesTo` [SetAttributeMode [ResetAllAttributes]]
+        ==> [SetAttributeMode [ResetAllAttributes]]
 testSetDisplayAttributes2 = "\ESC[31;40m"
-        `parsesTo` [SetAttributeMode [Foreground Red, Background Black]]
+        ==> [SetAttributeMode [Foreground Red, Background Black]]
 testSetDisplayAttributes3 = "\ESC[37;4mU\ESC[0m"
-        `parsesTo` [SetAttributeMode [Foreground White, Underscore],
+        ==> [SetAttributeMode [Foreground White, Underscore],
                     CharInput 'U',
                     SetAttributeMode [ResetAllAttributes]]
 testSetDisplayAttributes4 = "\ESC[30;5;43m"
-        `parsesTo` [SetAttributeMode [Foreground Black, Blink, Background Yellow]]
-testSetDisplayAttributes5 = "\ESC[1111m\ESC[49m"
-        `parsesTo` [SetAttributeMode [InvalidAttributeMode], SetAttributeMode [InvalidAttributeMode]]
+        ==> [SetAttributeMode [Foreground Black, Blink, Background Yellow]]
+testSetDisplayAttributes5 = "\ESC[1111m\ESC[50m"
+        ==> [SetAttributeMode [InvalidAttributeMode], SetAttributeMode [InvalidAttributeMode]]
 testSetTerminalTitle = "\ESC]0;Chickens don't clap!\007b"
-        `parsesTo` [SetTerminalTitle "Chickens don't clap!", CharInput 'b']
+        ==> [SetTerminalTitle "Chickens don't clap!", CharInput 'b']
 
 unitTests =
        [ testCase "testSetCursor" testSetCursor
@@ -61,6 +63,8 @@ unitTests =
        , testCase "testSetDisplayAttributes3" testSetDisplayAttributes3
        , testCase "testSetDisplayAttributes4" testSetDisplayAttributes4
        , testCase "testSetDisplayAttributes5" testSetDisplayAttributes5
+       , testCase "testResetColors"
+            ("\ESC[39;49m" ==> [SetAttributeMode [ResetForeground, ResetBackground]])
        , testCase "testSetTerminalTitle" testSetTerminalTitle       
        ]
 

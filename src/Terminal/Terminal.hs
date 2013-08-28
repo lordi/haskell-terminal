@@ -114,6 +114,8 @@ applyAttributeMode term ResetAllAttributes = term {
                                                 }
 applyAttributeMode term (Foreground c) = term { currentForeground = fromEnum c }
 applyAttributeMode term (Background c) = term { currentBackground = fromEnum c }
+applyAttributeMode term ResetForeground = term { currentForeground = fromEnum defaultForegroundColor }
+applyAttributeMode term ResetBackground = term { currentBackground = fromEnum defaultBackgroundColor }
 applyAttributeMode term _ = term -- TODO Implement blink, reverse, underline etc.
 
 applyAction :: TerminalAction -> Terminal -> Terminal
