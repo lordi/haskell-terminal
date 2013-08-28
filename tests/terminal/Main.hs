@@ -30,6 +30,27 @@ testColors = let term = applyDef [CharInput 'a',
              toEnum <$> [currentForeground term, currentBackground term] 
              @?= [Green, Yellow]
 
+-- |Test if currentForeground, currentBackground can be set
+testBackgroundDel = TestCase (do
+                    let term = applyDef [
+                            SetAttributeMode [Background Yellow],
+                            ANSIAction [2] 'J',
+                            SetAttributeMode [Background White],
+                            CharInput 'a',
+                            SetAttributeMode [Background Green],
+                            ANSIAction [] 'K'
+                            ]
+                    assertEqual "background color in the middle is yellow" 
+                        ((background term) ! (10, 10)) (fromEnum Yellow)
+                    assertEqual "background color in the middle is yellow" 
+                        ((background term) ! (10, 1)) (fromEnum Yellow)
+                    assertEqual "background color is white at (1,1)" 
+                        ((background term) ! (1, 1)) (fromEnum White)
+                    assertEqual "background color is green till the end of line" 
+                        ((background term) ! (1, 2)) (fromEnum Green)
+                    assertEqual "background color is green till the end of line" 
+                        ((background term) ! (1, 50)) (fromEnum Green))
+
 -- |Test if colors actually have any influence on the foreground/background
 -- arrays
 testColors2 = TestCase (do
@@ -120,4 +141,4 @@ main = defaultMainWithOpts (
        , testProperty "safeCursor" prop_SafeCursor
        ]) mempty
        where hUnitTests = [testColors2, testClearSreen, testColorsDoScroll,
-                            testSetTerminalTitle, testTabCharacter]
+                            testSetTerminalTitle, testTabCharacter, testBackgroundDel]

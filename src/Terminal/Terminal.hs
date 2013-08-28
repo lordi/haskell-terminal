@@ -85,7 +85,7 @@ scrollScreenDown r@(startrow, endrow) screen =
 
 scrollTerminalUp :: Terminal -> Terminal
 scrollTerminalUp term@Terminal { screen = s, scrollingRegion = r@(startrow, endrow) } =
-    clearLines [startrow] $ term {
+    clearRows [startrow] $ term {
         screen = scrollScreenUp (scrollingRegion term) s,
         foreground = scrollScreenUp (scrollingRegion term) (foreground term),
         background = scrollScreenUp (scrollingRegion term) (background term)
@@ -93,25 +93,33 @@ scrollTerminalUp term@Terminal { screen = s, scrollingRegion = r@(startrow, endr
 
 scrollTerminalDown :: Terminal -> Terminal
 scrollTerminalDown term@Terminal { screen = s, scrollingRegion = r@(startrow, endrow) } =
-    clearLines [endrow] $ term {
+    clearRows [endrow] $ term {
         screen = scrollScreenDown (scrollingRegion term) s,
         foreground = scrollScreenDown (scrollingRegion term) (foreground term),
         background = scrollScreenDown (scrollingRegion term) (background term)
     }
 
-clearLines :: [Int] -> Terminal -> Terminal
-clearLines rows term@Terminal { screen = s } =
+clearRows :: [Int] -> Terminal -> Terminal
+clearRows rows term@Terminal { screen = s } =
     term {
         screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-rows],
-        foreground = (foreground term) // [((y_,x_), fromEnum defaultForegroundColor)|x_<-[1..80],y_<-rows],
-        background = (background term) // [((y_,x_), fromEnum defaultBackgroundColor)|x_<-[1..80],y_<-rows]
+        foreground = (foreground term) // [((y_,x_), currentForeground term)|x_<-[1..80],y_<-rows],
+        background = (background term) // [((y_,x_), currentBackground term)|x_<-[1..80],y_<-rows]
         }
 
+clearColumns :: Int -> [Int] -> Terminal -> Terminal
+clearColumns row cols term@Terminal { screen = s } =
+    term { 
+        screen = s // [((row,x_), emptyChar)|x_<-cols],
+        background = (background term) // [((row,x_), currentBackground term)|x_<-cols]
+    }
+
 applyAttributeMode :: Terminal -> AttributeMode -> Terminal
-applyAttributeMode term ResetAllAttributes = term {
-                                                currentForeground = fromEnum defaultForegroundColor,
-                                                currentBackground = fromEnum defaultBackgroundColor
-                                                }
+applyAttributeMode term ResetAllAttributes =
+    term {
+        currentForeground = fromEnum defaultForegroundColor,
+        currentBackground = fromEnum defaultBackgroundColor
+    }
 applyAttributeMode term (Foreground c) = term { currentForeground = fromEnum c }
 applyAttributeMode term (Background c) = term { currentBackground = fromEnum c }
 applyAttributeMode term ResetForeground = term { currentForeground = fromEnum defaultForegroundColor }
@@ -140,6 +148,8 @@ applyAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
                                     foreground = (foreground term) // [(pos, currentForeground term)],
                                     background = (background term) // [(pos, currentBackground term)],
                                     cursorPos = (y, x + 1) }
+
+            -- Cursor movements
             CursorUp n          -> (iterate up term) !! n
             CursorDown n        -> (iterate down term) !! n
             CursorForward n     -> (iterate right term) !! n
@@ -155,35 +165,34 @@ applyAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
             -- Colors, yay!
             ANSIAction _ 'm'    -> term
 
-
+            -- Scrolling
             SetScrollingRegion start end -> term { scrollingRegion = (start, end) }
             ScrollUp            -> scrollTerminalUp term
             ScrollDown          -> scrollTerminalDown term
 
             -- Erases the screen with the background color and moves the cursor to home.
-            ANSIAction [2] 'J'  -> clearLines [1..24] $ term { cursorPos = (1, 1) }
+            ANSIAction [2] 'J'  -> clearRows [1..24] $ term { cursorPos = (1, 1) }
 
             -- Erases the screen from the current line up to the top of the screen.
-            ANSIAction [1] 'J'  -> clearLines [1..y] term
+            ANSIAction [1] 'J'  -> clearRows [1..y] term
 
             -- Erases the screen from the current line down to the bottom of the screen.
-            ANSIAction _ 'J'    -> clearLines [y..24] term
+            ANSIAction _ 'J'    -> clearRows [y..24] term
 
             -- Erases the entire current line.
-            ANSIAction [2] 'K'  -> term { screen = s // [((y,x_), emptyChar)|x_<-[1..80]] }
+            ANSIAction [2] 'K'  -> clearColumns y [1..80] term
 
             -- Erases from the current cursor position to the start of the current line.
-            ANSIAction [1] 'K'  -> term { screen = s // [((y,x_), emptyChar)|x_<-[1..x]] }
+            ANSIAction [1] 'K'  -> clearColumns y [1..x] term
 
             -- Erases from the current cursor position to the end of the current line. 
-            ANSIAction _ 'K'  -> term { screen = s // [((y,x_), emptyChar)|x_<-[x..80]] }
-
-            
+            ANSIAction _ 'K'    -> clearColumns y [x..80] term
+           
             -- Set the terminal title
             SetTerminalTitle t  -> term { terminalTitle = t }
 
             -- Attribute mode / color handling
-            SetAttributeMode modes -> foldl applyAttributeMode term modes
+            SetAttributeMode ms -> foldl applyAttributeMode term ms
 
-            _                 -> trace ("\nUnimplemented action: " ++ show act) term
+            _                   -> trace ("\nUnimplemented action: " ++ show act) term
 
