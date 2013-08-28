@@ -66,6 +66,10 @@ testSetTerminalTitle = TestCase (do
                 assertEqual "title is set"
                     (terminalTitle term) s)
 
+testTabCharacter = TestCase (do
+                let term = applyDef [CharInput '\t', CharInput 'i']
+                assertEqual "cursor is at (1, 9)" (cursorPos term) (1, 9))
+
 testClearSreen = TestCase (do
                 let term = applyDef [CharInput 'H',
                                      CharInput 'i',
@@ -110,8 +114,10 @@ prop_SafeCursor a =
 
 main :: IO ()
 main = defaultMainWithOpts (
-        concat (hUnitTestToTests <$> [testColors2, testClearSreen, testColorsDoScroll, testSetTerminalTitle])
+        concat (hUnitTestToTests <$> hUnitTests)
         ++
        [ testCase "testColors" testColors
        , testProperty "safeCursor" prop_SafeCursor
        ]) mempty
+       where hUnitTests = [testColors2, testClearSreen, testColorsDoScroll,
+                            testSetTerminalTitle, testTabCharacter]

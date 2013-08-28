@@ -119,13 +119,16 @@ applyAttributeMode term _ = term -- TODO Implement blink, reverse, underline etc
 applyAction :: TerminalAction -> Terminal -> Terminal
 applyAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
     safeCursor t
+    -- where t = case (trace ("Action" ++ show act) act) of
     where t = case act of
             Ignored             -> term
 
             -- Bell
             CharInput '\a'      -> term
 
-            CharInput '%'       -> term { screen = scrollScreenUp (scrollingRegion term) s }
+            -- Tab
+            CharInput '\t'      -> term { cursorPos = (y, (x `div` 8 + 1) * 8) }
+
             -- Newline
             CharInput '\n'      -> term { cursorPos = (y + 1, 1) }
             CharInput '\r'      -> term { cursorPos = (y, 1) }

@@ -201,7 +201,7 @@ main = do
     reshapeCallback $= Just (reshapeHandler state)
 
     let environment = [
-            ("TERM", "vt100"),
+            ("TERM", "xterm"),
             ("COLUMS", "79"),
             ("ROWS", "24")]
         cmd = "script"
