@@ -1,11 +1,10 @@
-module Terminal.Parser (parseANSI, parseString) where
+module Terminal.Parser (parseANSI, parseANSIAnnotate) where
 import Control.Monad
 import Control.Applicative hiding (many, (<|>))
 import Control.Monad.State
 import System.IO
 import System.Exit
 import Data.Char
-import Data.Maybe
 import Text.Parsec
 import Text.Parsec.String
 import Debug.Trace
@@ -14,6 +13,7 @@ import Data.Maybe (maybeToList)
 import qualified Text.Parsec.Token as PT
 
 import Terminal.Types
+import Terminal.ParserUtils
 
 -- TODO: choose another name
 simplify :: TerminalAction -> TerminalAction
@@ -41,13 +41,15 @@ parseString str = fst (fromRight (parseANSI str))
                       fromRight (Right r) = r
 
 parseANSI :: String -> Either ParseError ([TerminalAction], String)
-parseANSI s = parse pANSI "" s
+parseANSI s = parse (manyWithLeftover pSingle) "" s
 
-pANSI :: Parser ([TerminalAction], String)
-pANSI = do
-    x <- many (pANSISequence <|> pChar)
-    i <- getInput
-    return (map simplify x, i)
+-- |Parse incoming text, and return each TerminalAction annotated with the
+-- parsed string. This is usefull for debugging.
+parseANSIAnnotate :: String -> Either ParseError ([(TerminalAction, String)], String)
+parseANSIAnnotate s = parse (manyWithLeftover $ annotate pSingle) "" s
+
+pSingle :: Parser TerminalAction
+pSingle = (pANSISequence <|> pChar) >>= return . simplify
 
 pANSISequence :: Parser (TerminalAction)
 pANSISequence = try (pStandardANSISeq)
@@ -79,29 +81,10 @@ anyNonEscapeChar = satisfy (/= '\ESC')
 pChar :: Parser (TerminalAction)
 pChar = (anyNonEscapeChar >>= return . CharInput)
 
--- |Apply parser p at least n and up to m times
-manyUpTo n m p = do
-    first <- count n p
-    rest <- count (m - n) (optionMaybe p) 
-    return (first ++ (catMaybes rest))
-
 pNumber = read `fmap` (manyUpTo 1 6 digit)
 
-{-
-stdinReader =
-    forever $ do
-        (liftIO getChar) >>= \x -> modify $ \y -> y ++ [x]
-        s <- get
-        case (parseANSI s) of
-            Right (p, leftover) -> (liftIO $ print (p, leftover)) >> put leftover
-            Left b -> (liftIO $ print (b)) -- >> (liftIO $ exitFailure)
-        return ()
-
-    -}
-
-    {-
 main = do
-    hSetBuffering stdin NoBuffering
     print $ parseANSI "wldjawlkdj1234\a\n\n\ESC[0m\ESC[1;6m\ESC[2K\ESC[A\n12\n"
     print $ parseANSI "|M}\210\195\238\ESC[;\171\&2`[ZZZ_`__a\\a]\\aaa`_Z]["
-    runStateT stdinReader ""-}
+    print $ parseANSIAnnotate "\ESC[1;6m\ESC[2K\ESC[A\n12\n"
+
