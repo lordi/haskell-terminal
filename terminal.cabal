@@ -1,5 +1,5 @@
 Name: Terminal
-Version: 0.0.1
+Version: 0.0.2
 Description: Haskell terminal emulator
 License: GPL
 License-file: LICENSE
@@ -17,6 +17,7 @@ Executable hsterm
   Build-Depends: base >= 3 && < 5, containers, mtl, stm, random, array
   Build-Depends: time, GLUT, OpenGLRaw, GLURaw, OpenGL, parsec, unix, process
   Build-Depends: FTGL >= 1.333
+  GHC-Options: -O
 
 Executable hstermplay
   Main-is: Main.hs
