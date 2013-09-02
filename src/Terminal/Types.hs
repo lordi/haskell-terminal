@@ -42,8 +42,8 @@ data TerminalAction =
 
      -- Scrolling
      | SetScrollingRegion Int Int
-     | ScrollUp
-     | ScrollDown
+     | ScrollUp Int
+     | ScrollDown Int
 
      | ANSIAction [Int] Char
      | KeypadKeysApplicationsMode

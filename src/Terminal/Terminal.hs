@@ -1,4 +1,5 @@
 {-# LANGUAGE Rank2Types #-}
+-- Captures how TerminalActions change the Terminal
 module Terminal.Terminal (newTerminal, defaultTerm, applyAction, testTerm, scrollTerminalDown, scrollTerminalUp) where
 import System.Process
 import Data.Array.Unboxed
@@ -167,8 +168,8 @@ applyAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
 
             -- Scrolling
             SetScrollingRegion start end -> term { scrollingRegion = (start, end) }
-            ScrollUp            -> scrollTerminalUp term
-            ScrollDown          -> scrollTerminalDown term
+            ScrollUp n          -> (iterate scrollTerminalUp term) !! n
+            ScrollDown n        -> (iterate scrollTerminalDown term) !! n
 
             -- Erases the screen with the background color and moves the cursor to home.
             ANSIAction [2] 'J'  -> clearRows [1..24] $ term { cursorPos = (1, 1) }

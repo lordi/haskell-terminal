@@ -27,13 +27,19 @@ simplify (ANSIAction [] 'D') = CursorBackward 1
 simplify (ANSIAction [n] 'D') = CursorBackward n
 simplify (ANSIAction [n] 'G') = CursorAbsoluteColumn n
 simplify (ANSIAction [n] 'd') = CursorAbsoluteRow n
-simplify (ANSIAction [start, end] 'r') = SetScrollingRegion start end
 simplify (ANSIAction [25] 'h') = ShowCursor True
 simplify (ANSIAction [25] 'l') = ShowCursor False
 simplify (ANSIAction [] 'H') = SetCursor 1 1
 simplify (ANSIAction [] 'f') = SetCursor 1 1
 simplify (ANSIAction [y,x] 'H') = SetCursor y x
 simplify (ANSIAction [y,x] 'f') = SetCursor y x
+
+simplify (ANSIAction [start, end] 'r') = SetScrollingRegion start end
+simplify (ANSIAction [] 'S') = ScrollUp 1
+simplify (ANSIAction [n] 'S') = ScrollUp n
+simplify (ANSIAction [] 'T') = ScrollDown 1
+simplify (ANSIAction [n] 'T') = ScrollDown n
+
 simplify (ANSIAction attrModeNumbers 'm') = SetAttributeMode (map toEnum attrModeNumbers)
 simplify x = x
 
@@ -56,8 +62,8 @@ pSingle = (pANSISequence <|> pChar) >>= return . simplify
 pANSISequence :: Parser (TerminalAction)
 pANSISequence = try (pStandardANSISeq)
     <|> try (pSetTerminalTitle)
-    <|> try (string "\ESCM" >> return ScrollUp)
-    <|> try (string "\ESCD" >> return ScrollDown)
+    <|> try (string "\ESCM" >> return (ScrollUp 1))
+    <|> try (string "\ESCD" >> return (ScrollDown 1))
     <|> try (string "\ESC=" >> return KeypadKeysApplicationsMode)
     <|> try (string "\ESC>" >> return KeypadKeysNumericMode)
     <|> try (string "\ESC(B" >> return Ignored)
