@@ -23,7 +23,9 @@ data Terminal = Terminal {
     cols :: Int,
 
     currentForeground :: Int,
-    currentBackground :: Int
+    currentBackground :: Int,
+
+    optionShowCursor :: Bool
 }
 
 data TerminalAction =
@@ -48,6 +50,7 @@ data TerminalAction =
      | KeypadKeysNumericMode
      | SetAttributeMode [AttributeMode]
      | SetTerminalTitle String
+     | ShowCursor Bool
      | Ignored
      deriving (Show, Eq)
 

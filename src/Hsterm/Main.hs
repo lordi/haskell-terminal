@@ -118,10 +118,13 @@ displayHandler state = do
         renderFont font [screen term ! idx] All
 
   -- Cursor
-  let (cy, cx) = cursorPos term
-  translate $ toScreenCoordinates cx cy
-  color cursorColor
-  blendQuad
+  case (optionShowCursor term) of
+    True -> do
+      let (y, x) = cursorPos term
+      translate $ toScreenCoordinates x y
+      color cursorColor
+      blendQuad
+    _ -> return ()
 
   swapBuffers
 

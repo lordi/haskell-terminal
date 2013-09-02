@@ -47,6 +47,7 @@ newTerminal s@(rows, cols) = Terminal {
         [((y, x), fromEnum defaultBackgroundColor) | x <- [1..cols], y <- [1..rows]],
     currentForeground = fromEnum defaultForegroundColor,
     currentBackground = fromEnum defaultBackgroundColor,
+    optionShowCursor = True,
     terminalTitle = ""
 }
 
@@ -154,13 +155,12 @@ applyAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
             CursorDown n        -> (iterate down term) !! n
             CursorForward n     -> (iterate right term) !! n
             CursorBackward n    -> (iterate left term) !! n
-
-            -- Force cursor position
             CursorAbsoluteColumn col -> term { cursorPos = (y, col) }
             CursorAbsoluteRow row  -> term { cursorPos = (row, x) }
-
-            -- Force cursor position
             SetCursor row col   -> term { cursorPos = (row, col) }
+
+            -- Cursor visibility
+            ShowCursor s        -> term { optionShowCursor = s }
 
             -- Colors, yay!
             ANSIAction _ 'm'    -> term
