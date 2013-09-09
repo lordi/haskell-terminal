@@ -83,10 +83,15 @@ data AttributeMode =
      | ResetAllAttributes
      | Bright
      | Dim
-     | Underscore
-     | Blink
-     | Reverse
+     | Underlined
+     | Blinking
+     | Inverse
      | Hidden
+     | Normal
+     | NotUnderlined
+     | NotBlinking
+     | NotInverse
+     | NotHidden
      | Foreground TerminalColor
      | Background TerminalColor
      | ResetForeground
@@ -99,10 +104,15 @@ instance Enum AttributeMode where
 tableAM = [ (ResetAllAttributes, 0)
           , (Bright, 1)
           , (Dim, 2)
-          , (Underscore, 4)
-          , (Blink, 5)
-          , (Reverse, 7)
+          , (Underlined, 4)
+          , (Blinking, 5)
+          , (Inverse, 7)
           , (Hidden, 8)
+          , (Normal, 22)
+          , (NotUnderlined, 24)
+          , (NotBlinking, 25)
+          , (NotInverse, 27)
+          , (NotHidden, 28)
           ] ++ [(Foreground tcol, 30 + fromEnum tcol) | tcol <- [Black .. White]]
             ++ [(Background tcol, 40 + fromEnum tcol) | tcol <- [Black .. White]]
             ++ [(ResetForeground, 39), (ResetBackground, 49)]

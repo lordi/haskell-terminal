@@ -43,16 +43,16 @@ testCharInputIg = "\ESC[;nw\ESC[5652;7974;10;;;xA"
 testSetDisplayAttributes1 = "\ESC[0m"
         ==> [SetAttributeMode [ResetAllAttributes]]
 
-testSetDisplayAttributes2 = "\ESC[31;40m"
-        ==> [SetAttributeMode [Foreground Red, Background Black]]
+testSetDisplayAttributes2 = "\ESC[31;40m\ESC[25m"
+        ==> [SetAttributeMode [Foreground Red, Background Black], SetAttributeMode [NotBlinking]]
 
 testSetDisplayAttributes3 = "\ESC[37;4mU\ESC[0m"
-        ==> [SetAttributeMode [Foreground White, Underscore],
+        ==> [SetAttributeMode [Foreground White, Underlined],
                     CharInput 'U',
                     SetAttributeMode [ResetAllAttributes]]
 
 testSetDisplayAttributes4 = "\ESC[30;5;43m"
-        ==> [SetAttributeMode [Foreground Black, Blink, Background Yellow]]
+        ==> [SetAttributeMode [Foreground Black, Blinking, Background Yellow]]
 
 testSetDisplayAttributes5 = "\ESC[1111m\ESC[50m"
         ==> [SetAttributeMode [InvalidAttributeMode], SetAttributeMode [InvalidAttributeMode]]

@@ -25,7 +25,7 @@ testColors :: Assertion
 testColors = let term = applyDef [CharInput 'a',
                                   SetAttributeMode [Foreground Green],
                                   CharInput 'b',
-                                  SetAttributeMode [Background Yellow, Blink]
+                                  SetAttributeMode [Background Yellow, Blinking]
                                  ] in
              toEnum <$> [currentForeground term, currentBackground term] 
              @?= [Green, Yellow]
@@ -60,7 +60,7 @@ testColors2 = TestCase (do
                                    SetAttributeMode [Background White],
                                    CharInput 'i',
                                    CharInput '\n',
-                                   SetAttributeMode [Foreground Yellow, Blink],
+                                   SetAttributeMode [Foreground Yellow, Blinking],
                                    CharInput 'X',
                                    SetAttributeMode  [ResetAllAttributes],
                                    CharInput '\n',
