@@ -16,7 +16,7 @@ Executable hsterm
   Extensions: CPP
   Build-Depends: base >= 3 && < 5, containers, mtl, stm, random, array
   Build-Depends: time, GLUT, OpenGLRaw, GLURaw, OpenGL, parsec, unix, process
-  Build-Depends: FTGL >= 1.333
+  Build-Depends: FTGL >= 1.333, colour
   GHC-Options: -O
 
 Executable hstermplay

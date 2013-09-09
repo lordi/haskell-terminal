@@ -13,6 +13,7 @@ import qualified Data.Time.Clock as C
 
 import Terminal.Terminal
 import Terminal.Types
+import Hsterm.Config
 
 data State = State {
     terminal :: IORef Terminal,
@@ -23,11 +24,12 @@ data State = State {
     cursorProgram :: IORef (Maybe Program),
     currentFont :: IORef (Maybe Font),
     fontWidth :: IORef Float,
-    fontHeight :: IORef Float
+    fontHeight :: IORef Float,
+    config :: IORef TerminalConfig
 }
 
-makeState :: IO State
-makeState = do
+makeState :: TerminalConfig -> IO State
+makeState cfg = do
     terminal' <- newIORef defaultTerm
 
     startupTime' <- getCurrentTime >>= newIORef
@@ -39,6 +41,7 @@ makeState = do
     currentFont' <- newIORef Nothing
     fontWidth' <- newIORef 0.0
     fontHeight' <- newIORef 0.0
+    config' <- newIORef cfg
 
     return State {
         terminal = terminal',
@@ -51,5 +54,6 @@ makeState = do
         cursorProgram = cursorProgram',
         currentFont = currentFont',
         fontHeight = fontHeight',
-        fontWidth = fontWidth'
+        fontWidth = fontWidth',
+        config = config'
     }
