@@ -27,8 +27,7 @@ testColors = let term = applyDef [CharInput 'a',
                                   CharInput 'b',
                                   SetAttributeMode [Background Yellow, Blinking]
                                  ] in
-             toEnum <$> [currentForeground term, currentBackground term] 
-             @?= [Green, Yellow]
+             [currentForeground term, currentBackground term] @?= [Green, Yellow]
 
 -- |Test if currentForeground, currentBackground can be set
 testBackgroundDel = TestCase (do
@@ -41,15 +40,15 @@ testBackgroundDel = TestCase (do
                             ANSIAction [] 'K'
                             ]
                     assertEqual "background color in the middle is yellow" 
-                        ((background term) ! (10, 10)) (fromEnum Yellow)
+                        (backgroundColor $ (screen term) ! (10, 10)) (Yellow)
                     assertEqual "background color in the middle is yellow" 
-                        ((background term) ! (10, 1)) (fromEnum Yellow)
+                        (backgroundColor $ (screen term) ! (10, 1)) (Yellow)
                     assertEqual "background color is white at (1,1)" 
-                        ((background term) ! (1, 1)) (fromEnum White)
+                        (backgroundColor $ (screen term) ! (1, 1)) (White)
                     assertEqual "background color is green till the end of line" 
-                        ((background term) ! (1, 2)) (fromEnum Green)
+                        (backgroundColor $ (screen term) ! (1, 2)) (Green)
                     assertEqual "background color is green till the end of line" 
-                        ((background term) ! (1, 50)) (fromEnum Green))
+                        (backgroundColor $ (screen term) ! (1, 50)) (Green))
 
 -- |Test if colors actually have any influence on the foreground/background
 -- arrays
@@ -70,15 +69,15 @@ testColors2 = TestCase (do
                 assertEqual "cursor is at the beginning of third row"
                     (cursorPos term) (3, 1)
                 assertEqual "foreground color is correct in first char" 
-                    ((foreground term) ! (1, 1)) (fromEnum Green)
+                    (foregroundColor $ (screen term) ! (1, 1)) (Green)
                 assertEqual "background color is correct in first char" 
-                    ((background term) ! (1, 1)) (fromEnum Magenta)
+                    (backgroundColor $ (screen term) ! (1, 1)) (Magenta)
                 assertEqual "background color is correct in second char" 
-                    ((background term) ! (1, 2)) (fromEnum White)
+                    (backgroundColor $ (screen term) ! (1, 2)) (White)
                 assertEqual "foreground color is correct in second row" 
-                    ((foreground term) ! (2, 1)) (fromEnum Yellow)
+                    (foregroundColor $ (screen term) ! (2, 1)) (Yellow)
                 assertEqual "background color is default in third row" 
-                    ((background term) ! (3, 1)) (fromEnum Black)
+                    (backgroundColor $ (screen term) ! (3, 1)) (Black)
                 )
 
 testSetTerminalTitle = TestCase (do
@@ -100,7 +99,7 @@ testClearSreen = TestCase (do
                 assertEqual "cursor is at the beginning of first row"
                     (cursorPos term) (1, 1)
                 assertEqual "first char in first row is empty"
-                    (screen term ! (1, 1)) ' ')
+                    (character $ screen term ! (1, 1)) ' ')
 
 testColorsDoScroll = TestCase (do
                 let term = applyDef ([
@@ -111,9 +110,9 @@ testColorsDoScroll = TestCase (do
                 assertEqual "cursor is at the beginning of last row"
                     (cursorPos term) (rows term, 1)
                 assertEqual "background color is default in (1, 1)"
-                    ((background term) ! (1, 1)) (fromEnum Black)
+                    (backgroundColor $ (screen term) ! (1, 1)) Black
                 assertEqual "foreground color is default in (1, 1)"
-                    ((foreground term) ! (1, 1)) (fromEnum White)
+                    (foregroundColor $ (screen term) ! (1, 1)) White
                 )
 
 -- TerminalAction tests

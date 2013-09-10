@@ -2,7 +2,7 @@
 -- Captures how TerminalActions change the Terminal
 module Terminal.Terminal (newTerminal, defaultTerm, applyAction, testTerm, scrollTerminalDown, scrollTerminalUp) where
 import System.Process
-import Data.Array.Unboxed
+import Data.Array.Diff
 import Data.Char
 import Control.Monad
 import Control.Monad.State hiding (state)
@@ -20,15 +20,19 @@ import Terminal.Types
 defaultForegroundColor = White
 defaultBackgroundColor = Black
 
-emptyChar = ' '
+mkChar c term@Terminal { currentForeground = f, currentBackground = b } =
+    TerminalChar {
+        character = c,
+        foregroundColor = f,
+        backgroundColor = b,
+        charBold = False,
+        charBlinking = False,
+        charUnderlined = False
+    }
+mkEmptyChar = mkChar ' '
 
+testTerm = defaultTerm
 defaultTerm = newTerminal (24, 80)
-
-testTerm = defaultTerm {
-            screen = array
-                    ((1, 1), (24,80))
-                    [((y, x), chr $ ord 'A' + y) | x <- [1..80], y <- [1..24]]
-            }
 
 newTerminal s@(rows, cols) = Terminal {
     cursorPos = (1, 1),
@@ -37,20 +41,13 @@ newTerminal s@(rows, cols) = Terminal {
     inBuffer = "",
     responseBuffer = "",
     scrollingRegion = (1, rows),
-    screen = array
-        ((1, 1), s)
-        [((y, x), emptyChar) | x <- [1..cols], y <- [1..rows]],
-    foreground = array
-        ((1, 1), s)
-        [((y, x), fromEnum defaultForegroundColor) | x <- [1..cols], y <- [1..rows]],
-    background = array
-        ((1, 1), s)
-        [((y, x), fromEnum defaultBackgroundColor) | x <- [1..cols], y <- [1..rows]],
-    currentForeground = fromEnum defaultForegroundColor,
-    currentBackground = fromEnum defaultBackgroundColor,
+    screen = array ((1, 1), s)
+        [((y, x), e) | x <- [1..cols], y <- [1..rows]],
+    currentForeground = defaultForegroundColor,
+    currentBackground = defaultBackgroundColor,
     optionShowCursor = True,
     terminalTitle = ""
-}
+} where e = mkEmptyChar (newTerminal s) -- Hail laziness
 
 up t@Terminal {cursorPos = (y, x)} = safeCursor $ t { cursorPos = (y - 1, x) }
 down t@Terminal {cursorPos = (y, x)} = safeCursor $ t { cursorPos = (y + 1, x) }
@@ -88,44 +85,37 @@ scrollScreenDown r@(startrow, endrow) screen =
 scrollTerminalUp :: Terminal -> Terminal
 scrollTerminalUp term@Terminal { screen = s, scrollingRegion = r@(startrow, endrow) } =
     clearRows [startrow] $ term {
-        screen = scrollScreenUp (scrollingRegion term) s,
-        foreground = scrollScreenUp (scrollingRegion term) (foreground term),
-        background = scrollScreenUp (scrollingRegion term) (background term)
+        screen = scrollScreenUp (scrollingRegion term) s
     }
 
 scrollTerminalDown :: Terminal -> Terminal
 scrollTerminalDown term@Terminal { screen = s, scrollingRegion = r@(startrow, endrow) } =
     clearRows [endrow] $ term {
-        screen = scrollScreenDown (scrollingRegion term) s,
-        foreground = scrollScreenDown (scrollingRegion term) (foreground term),
-        background = scrollScreenDown (scrollingRegion term) (background term)
+        screen = scrollScreenDown (scrollingRegion term) s
     }
 
 clearRows :: [Int] -> Terminal -> Terminal
 clearRows rows term@Terminal { screen = s } =
     term {
-        screen = s // [((y_,x_), emptyChar)|x_<-[1..80],y_<-rows],
-        foreground = (foreground term) // [((y_,x_), currentForeground term)|x_<-[1..80],y_<-rows],
-        background = (background term) // [((y_,x_), currentBackground term)|x_<-[1..80],y_<-rows]
-        }
+        screen = s // [((y_,x_), mkEmptyChar term)|x_<-[1..80],y_<-rows]
+    }
 
 clearColumns :: Int -> [Int] -> Terminal -> Terminal
 clearColumns row cols term@Terminal { screen = s } =
     term { 
-        screen = s // [((row,x_), emptyChar)|x_<-cols],
-        background = (background term) // [((row,x_), currentBackground term)|x_<-cols]
+        screen = s // [((row,x_), mkEmptyChar term)|x_<-cols]
     }
 
 applyAttributeMode :: Terminal -> AttributeMode -> Terminal
 applyAttributeMode term ResetAllAttributes =
     term {
-        currentForeground = fromEnum defaultForegroundColor,
-        currentBackground = fromEnum defaultBackgroundColor
+        currentForeground = defaultForegroundColor,
+        currentBackground = defaultBackgroundColor
     }
-applyAttributeMode term (Foreground c) = term { currentForeground = fromEnum c }
-applyAttributeMode term (Background c) = term { currentBackground = fromEnum c }
-applyAttributeMode term ResetForeground = term { currentForeground = fromEnum defaultForegroundColor }
-applyAttributeMode term ResetBackground = term { currentBackground = fromEnum defaultBackgroundColor }
+applyAttributeMode term (Foreground c) = term { currentForeground = c }
+applyAttributeMode term (Background c) = term { currentBackground = c }
+applyAttributeMode term ResetForeground = term { currentForeground = defaultForegroundColor }
+applyAttributeMode term ResetBackground = term { currentBackground = defaultBackgroundColor }
 applyAttributeMode term _ = term -- TODO Implement blink, reverse, underline etc.
 
 applyAction :: TerminalAction -> Terminal -> Terminal
@@ -144,11 +134,9 @@ applyAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
             -- Newline
             CharInput '\n'      -> term { cursorPos = (y + 1, 1) }
             CharInput '\r'      -> term { cursorPos = (y, 1) }
-            CharInput '\b'      -> term { screen = s // [(pos, emptyChar)], cursorPos = (y, x - 1) }
+            CharInput '\b'      -> term { screen = s // [(pos, mkEmptyChar term)], cursorPos = (y, x - 1) }
             CharInput c         -> term { 
-                                    screen = s // [(pos, c)],
-                                    foreground = (foreground term) // [(pos, currentForeground term)],
-                                    background = (background term) // [(pos, currentBackground term)],
+                                    screen = s // [(pos, mkChar c term)],
                                     cursorPos = (y, x + 1) }
 
             -- Cursor movements

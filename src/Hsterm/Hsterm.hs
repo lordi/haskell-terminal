@@ -1,7 +1,7 @@
 {-# LANGUAGE Rank2Types #-}
 module Hsterm.Hsterm where
 import System.Process
-import Data.Array.Unboxed
+import Data.Array.Diff
 import Data.IORef
 import Data.Char
 import Data.Maybe (fromJust)
@@ -96,16 +96,17 @@ displayHandler state = do
 
   forM_ (indices $ screen term) $ \idx@(y, x) ->
     preservingMatrix $ do
+        let tc = screen term ! idx
         translate $ toScreenCoordinates x y
 
         -- Render a quad in the background color
-        setColor $ toEnum (background term ! idx)
+        setColor $ backgroundColor tc
         blendQuad
 
         -- Render a font in the foreground color
-        setColor $ toEnum (foreground term ! idx)
+        setColor $ foregroundColor tc
         translate $ Vector3 0 (4) (0 :: GLfloat)
-        renderFont font [screen term ! idx] All
+        renderFont font [character tc] All
 
   -- Cursor
   case (optionShowCursor term) of
