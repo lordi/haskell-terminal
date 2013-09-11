@@ -1,20 +1,27 @@
 module Terminal.Types where
-import Data.Array.Unboxed
+import Data.Array.Diff
 import Data.Char
 import Data.Maybe (fromJust, fromMaybe)
 import Data.Tuple (swap)
 
 type ScreenIndex = (Int, Int)
 
-type TerminalArray = UArray ScreenIndex
-type TerminalScreen = TerminalArray Char
+data TerminalChar = TerminalChar {
+    character :: Char,
+    foregroundColor :: TerminalColor,
+    backgroundColor :: TerminalColor,
+    isBright :: Bool,
+    isUnderlined :: Bool,
+    isBlinking :: Bool
+} deriving (Show)
+
+type TerminalArray = DiffArray ScreenIndex
+type TerminalScreen = TerminalArray TerminalChar
 type TerminalColorArray = TerminalArray Int
 
 data Terminal = Terminal {
     cursorPos :: ScreenIndex,
     screen :: TerminalScreen,
-    foreground :: TerminalColorArray,
-    background :: TerminalColorArray,
     inBuffer :: String,
     responseBuffer :: String,
     terminalTitle :: String,
@@ -22,10 +29,13 @@ data Terminal = Terminal {
     rows :: Int,
     cols :: Int,
 
-    currentForeground :: Int,
-    currentBackground :: Int,
+    currentForeground :: TerminalColor,
+    currentBackground :: TerminalColor,
 
-    optionShowCursor :: Bool
+    optionShowCursor :: Bool,
+    optionBright :: Bool,
+    optionUnderlined :: Bool,
+    optionBlinking :: Bool
 }
 
 data TerminalAction =

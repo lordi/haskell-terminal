@@ -3,6 +3,7 @@ import Data.Colour.SRGB (sRGB)
 import Data.Colour (Colour)
 import Terminal.Types (TerminalColor(..))
 
+-- These get overwritten with nicer colors in Main.hs
 defaultColor Black   = sRGB 0 0 0
 defaultColor Green   = sRGB 0 1 0
 defaultColor Yellow  = sRGB 0 1 1
@@ -12,10 +13,11 @@ defaultColor Cyan    = sRGB 1 0 1
 defaultColor White   = sRGB 1 1 1
 
 data TerminalConfig = TerminalConfig {
-    defaultForegroundColor :: Colour Double,
-    defaultBackgroundColor :: Colour Double,
+    defaultForegroundColor :: TerminalColor,
+    defaultBackgroundColor :: TerminalColor,
     cursorColor :: Colour Double,
     colorMap :: TerminalColor -> Colour Double,
+    colorMapBright :: TerminalColor -> Colour Double,
     fontPath :: FilePath,
     initScriptPath :: FilePath,
     fontSize :: Integer
@@ -23,11 +25,12 @@ data TerminalConfig = TerminalConfig {
 
 defaultTerminalConfig :: TerminalConfig
 defaultTerminalConfig = TerminalConfig {
-    defaultForegroundColor = defaultColor White,
-    defaultBackgroundColor = defaultColor Black,
+    defaultForegroundColor = White,
+    defaultBackgroundColor = Black,
     cursorColor = defaultColor White,
     fontPath = "data/fonts/monofur/monof55.ttf",
     colorMap = defaultColor,
+    colorMapBright = defaultColor,
     initScriptPath = "data/init.sh",
     fontSize = 20
 }

@@ -13,7 +13,16 @@ myConfig = defaultTerminalConfig {
         Blue    -> "#204a87"
         Magenta -> "#ce5c00"
         Cyan    -> "#89b6e2"
-        White   -> "#cccccc"
+        White   -> "#cccccc",
+    colorMapBright = \c -> sRGB24read $ case c of
+        Black   -> "#555753"
+        Red     -> "#ff8d8d"
+        Green   -> "#c8e7a8"
+        Yellow  -> "#ffc123"
+        Blue    -> "#3465a4"
+        Magenta -> "#f57900"
+        Cyan    -> "#46a4ff"
+        White   -> "#ffffff"
 }
 
 main = runHsterm myConfig

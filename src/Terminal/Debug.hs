@@ -1,6 +1,6 @@
 {-# LANGUAGE Rank2Types #-}
 module Terminal.Debug (printTerminal) where
-import Data.Array.Unboxed ( elems, (//) )
+import Data.Array.Diff ( elems, (//) )
 import System.IO
 -- import Data.Set (elems)
 import Terminal.Types
@@ -20,7 +20,7 @@ printTerminal term = do
     putStrLn $ "," ++ (replicate (cols term) '_') ++ ","
     mapM_
         (putStrLn . (wrap "|"))
-        (chunk (cols term) $ elems (screen term // [(cursorPos term, '|')]))
+        (chunk (cols term) $ map character $ elems (screen term))
     putStrLn $ "`" ++ (replicate (cols term) '"') ++ "´"
     hFlush stdout
     where wrap d s = d ++ s ++ d

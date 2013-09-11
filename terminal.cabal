@@ -8,7 +8,7 @@ Maintainer: hgraeule@uos.de
 Build-Type: Simple
 Cabal-Version: >=1.2
 Extra-source-files: README.md
-Data-Files: data/*.ttf data/*.sh
+Data-Files: data/fonts/*/*.ttf data/*.sh
 
 Executable hsterm
   Main-is: Main.hs
@@ -16,7 +16,7 @@ Executable hsterm
   Extensions: CPP
   Build-Depends: base >= 3 && < 5, containers, mtl, stm, random, array
   Build-Depends: time, GLUT, OpenGLRaw, GLURaw, OpenGL, parsec, unix, process
-  Build-Depends: FTGL >= 1.333, colour
+  Build-Depends: FTGL >= 1.333, colour, diffarray
   GHC-Options: -O
 
 Executable hstermplay
@@ -24,7 +24,7 @@ Executable hstermplay
   Hs-Source-Dirs: src/Hstermplay, src
   Extensions: CPP
   Build-Depends: base >= 3 && < 5, containers, mtl, stm, random, array
-  Build-Depends: time, parsec, unix, process
+  Build-Depends: time, parsec, unix, process, diffarray
 
 test-suite TerminalTests
   type:            exitcode-stdio-1.0
@@ -35,6 +35,7 @@ test-suite TerminalTests
                    test-framework >= 0.4.1,
                    test-framework-quickcheck2,
                    HUnit,
+                   diffarray,
                    test-framework-hunit
   hs-source-dirs:  tests/terminal, src
   main-is:         Main.hs
@@ -48,6 +49,7 @@ test-suite ParserTests
                    test-framework >= 0.4.1,
                    test-framework-quickcheck2,
                    HUnit,
+                   diffarray,
                    test-framework-hunit
   hs-source-dirs:  tests/parser, src
   main-is:         Main.hs
