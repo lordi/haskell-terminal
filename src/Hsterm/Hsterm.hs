@@ -84,8 +84,9 @@ displayHandler state = do
 
   let fontWidth'' = realToFrac fontWidth'
       fontHeight'' = realToFrac fontHeight'
-      setColor :: TerminalColor -> IO ()
-      setColor c = do color (glColor (colorMap cfg c))
+      setColor :: Bool -> TerminalColor -> IO ()
+      setColor bright c = do color (glColor (cm cfg c))
+                        where cm = if bright then colorMapBright else colorMap
       toScreenCoordinates :: Int -> Int -> Vector3 GLfloat
       toScreenCoordinates x y = Vector3 sx sy sz
         where sx = fontWidth'' * (fromIntegral x - 1)
@@ -100,11 +101,11 @@ displayHandler state = do
         translate $ toScreenCoordinates x y
 
         -- Render a quad in the background color
-        setColor $ backgroundColor tc
+        setColor False (backgroundColor tc)
         blendQuad
 
         -- Render a font in the foreground color
-        setColor $ foregroundColor tc
+        setColor (isBright tc) (foregroundColor tc)
         translate $ Vector3 0 (4) (0 :: GLfloat)
         renderFont font [character tc] All
 

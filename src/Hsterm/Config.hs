@@ -17,7 +17,7 @@ data TerminalConfig = TerminalConfig {
     defaultBackgroundColor :: TerminalColor,
     cursorColor :: Colour Double,
     colorMap :: TerminalColor -> Colour Double,
-    colorMapBold :: TerminalColor -> Colour Double,
+    colorMapBright :: TerminalColor -> Colour Double,
     fontPath :: FilePath,
     initScriptPath :: FilePath,
     fontSize :: Integer
@@ -30,7 +30,7 @@ defaultTerminalConfig = TerminalConfig {
     cursorColor = defaultColor White,
     fontPath = "data/fonts/monofur/monof55.ttf",
     colorMap = defaultColor,
-    colorMapBold = defaultColor,
+    colorMapBright = defaultColor,
     initScriptPath = "data/init.sh",
     fontSize = 20
 }

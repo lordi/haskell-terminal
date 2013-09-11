@@ -115,6 +115,25 @@ testColorsDoScroll = TestCase (do
                     (foregroundColor $ (screen term) ! (1, 1)) White
                 )
 
+testColorsBright = TestCase (do
+                let term = applyDef ([
+                                   SetAttributeMode [Foreground Yellow, Bright],
+                                   CharInput '$', CharInput '\n',
+                                   SetAttributeMode [Foreground Yellow, Underlined],
+                                   CharInput '^', CharInput '\n',
+                                   SetAttributeMode [ResetAllAttributes],
+                                   CharInput 'o'
+                                   ])
+                assertEqual "cursor is at the second position in the second row"
+                    (cursorPos term) (3, 2)
+                assertEqual "character is bright (1, 1)"
+                    (isBright $ (screen term) ! (1, 1)) True
+                assertEqual "character is bright (2, 1)"
+                    (isBright $ (screen term) ! (2, 1)) True
+                assertEqual "character is not bright (3, 1)"
+                    (isBright $ (screen term) ! (3, 1)) False
+                )
+
 -- TerminalAction tests
 instance Arbitrary TerminalAction where
     arbitrary = oneof [
@@ -140,4 +159,5 @@ main = defaultMainWithOpts (
        , testProperty "safeCursor" prop_SafeCursor
        ]) mempty
        where hUnitTests = [testColors2, testClearSreen, testColorsDoScroll,
-                            testSetTerminalTitle, testTabCharacter, testBackgroundDel]
+                            testSetTerminalTitle, testTabCharacter,
+                            testBackgroundDel, testColorsBright]

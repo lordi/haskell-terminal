@@ -14,7 +14,7 @@ myConfig = defaultTerminalConfig {
         Magenta -> "#ce5c00"
         Cyan    -> "#89b6e2"
         White   -> "#cccccc",
-    colorMapBold = \c -> sRGB24read $ case c of
+    colorMapBright = \c -> sRGB24read $ case c of
         Black   -> "#555753"
         Red     -> "#ff8d8d"
         Green   -> "#c8e7a8"

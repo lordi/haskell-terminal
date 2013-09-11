@@ -10,9 +10,9 @@ data TerminalChar = TerminalChar {
     character :: Char,
     foregroundColor :: TerminalColor,
     backgroundColor :: TerminalColor,
-    charBold :: Bool,
-    charUnderlined :: Bool,
-    charBlinking :: Bool
+    isBright :: Bool,
+    isUnderlined :: Bool,
+    isBlinking :: Bool
 } deriving (Show)
 
 type TerminalArray = DiffArray ScreenIndex
@@ -32,7 +32,10 @@ data Terminal = Terminal {
     currentForeground :: TerminalColor,
     currentBackground :: TerminalColor,
 
-    optionShowCursor :: Bool
+    optionShowCursor :: Bool,
+    optionBright :: Bool,
+    optionUnderlined :: Bool,
+    optionBlinking :: Bool
 }
 
 data TerminalAction =

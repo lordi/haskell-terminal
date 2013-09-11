@@ -20,15 +20,14 @@ import Terminal.Types
 defaultForegroundColor = White
 defaultBackgroundColor = Black
 
-mkChar c term@Terminal { currentForeground = f, currentBackground = b } =
-    TerminalChar {
-        character = c,
-        foregroundColor = f,
-        backgroundColor = b,
-        charBold = False,
-        charBlinking = False,
-        charUnderlined = False
-    }
+mkChar c term = TerminalChar {
+                    character = c,
+                    foregroundColor = currentForeground term,
+                    backgroundColor = currentBackground term,
+                    isBright = optionBright term,
+                    isBlinking = optionBlinking term,
+                    isUnderlined = optionUnderlined term
+                }
 mkEmptyChar = mkChar ' '
 
 testTerm = defaultTerm
@@ -46,7 +45,10 @@ newTerminal s@(rows, cols) = Terminal {
     currentForeground = defaultForegroundColor,
     currentBackground = defaultBackgroundColor,
     optionShowCursor = True,
-    terminalTitle = ""
+    terminalTitle = "",
+    optionBright = False,
+    optionUnderlined = False,
+    optionBlinking = False
 } where e = mkEmptyChar (newTerminal s) -- Hail laziness
 
 up t@Terminal {cursorPos = (y, x)} = safeCursor $ t { cursorPos = (y - 1, x) }
@@ -106,17 +108,27 @@ clearColumns row cols term@Terminal { screen = s } =
         screen = s // [((row,x_), mkEmptyChar term)|x_<-cols]
     }
 
+-- Attribute mode handling
 applyAttributeMode :: Terminal -> AttributeMode -> Terminal
 applyAttributeMode term ResetAllAttributes =
     term {
         currentForeground = defaultForegroundColor,
-        currentBackground = defaultBackgroundColor
+        currentBackground = defaultBackgroundColor,
+        optionBright = False,
+        optionUnderlined = False,
+        optionBlinking = False
     }
 applyAttributeMode term (Foreground c) = term { currentForeground = c }
 applyAttributeMode term (Background c) = term { currentBackground = c }
 applyAttributeMode term ResetForeground = term { currentForeground = defaultForegroundColor }
 applyAttributeMode term ResetBackground = term { currentBackground = defaultBackgroundColor }
-applyAttributeMode term _ = term -- TODO Implement blink, reverse, underline etc.
+applyAttributeMode term Bright = term { optionBright = True }
+applyAttributeMode term Normal = term { optionBright = False }
+applyAttributeMode term Underlined = term { optionUnderlined = True }
+applyAttributeMode term NotUnderlined = term { optionUnderlined = False }
+applyAttributeMode term Blinking = term { optionBlinking = True }
+applyAttributeMode term NotBlinking = term { optionBlinking = False }
+applyAttributeMode term other = trace ("\nUnimplemented attribute mode: " ++ show other) term
 
 applyAction :: TerminalAction -> Terminal -> Terminal
 applyAction act term@Terminal { screen = s, cursorPos = pos@(y, x) } =
